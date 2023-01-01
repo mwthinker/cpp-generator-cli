@@ -1,8 +1,5 @@
 package se.mwthinker;
 
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteWatchdog;
-import org.apache.commons.lang3.SystemUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -109,23 +106,9 @@ public class GeneratorCli implements Callable<Integer> {
 
         File buildDir = new File(projectDir, "build");
 
-        String preset = "unix";
-        if (SystemUtils.IS_OS_WINDOWS) {
-            preset = "windows";
-        }
-
-        var cmdLine = org.apache.commons.exec.CommandLine.parse("cmake --preset " + preset + " -B \"" + buildDir.getAbsolutePath() +"\"");
-        DefaultExecutor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(projectDir);
-        int exitValue = executor.execute(cmdLine);
-        ExecuteWatchdog watchdog = new ExecuteWatchdog(20000);
-        executor.setWatchdog(watchdog);
-
-        executor.setWorkingDirectory(buildDir);
-        String openVisualStudioSolution = "cmd /C start devenv \"" + projectDir.getName() + ".sln\"";
-        System.out.println(openVisualStudioSolution);
-        cmdLine = org.apache.commons.exec.CommandLine.parse(openVisualStudioSolution);
-        exitValue = executor.execute(cmdLine);
+        var generator = new CMakeGenerator();
+        generator.generate(projectDir, buildDir);
+        generator.openVisualStudio(projectDir, buildDir);
 
         return 0;
     }
