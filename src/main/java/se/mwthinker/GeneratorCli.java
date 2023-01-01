@@ -21,12 +21,17 @@ import java.util.concurrent.Callable;
 
 @Command(name = "cpp", mixinStandardHelpOptions = true, description = "Solves the 2021 05-problem")
 public class GeneratorCli implements Callable<Integer> {
-
     @Option(names = { "-n", "--new" }, required = true, paramLabel = "NEW", description = "the project name")
     private File projectDir;
 
     @Option(names = { "-v", "--vcpkg" }, paramLabel = "VCPKG_ROOT", description = "the directory containing the vcpkg repository (overrides the env variable)")
     private Path vcpkgPath;
+
+    @Option(names = { "-d", "--description" }, paramLabel = "DESCRIPTION ", description = "short description used in the template")
+    private String description = "Description";
+
+    @Option(names = { "-V", "--verbose" }, paramLabel = "VERBOSE", description = "show verbose output")
+    private boolean verbose = false;
 
     public GeneratorCli() {
     }
@@ -74,7 +79,7 @@ public class GeneratorCli implements Callable<Integer> {
     }
 
     @Override
-    public Integer call() throws Exception {
+    public Integer call() {
         if (vcpkgPath == null) {
             String vcpkgRootStr = System.getenv("VCPKG_ROOT");
             vcpkgPath = Paths.get(vcpkgRootStr);
@@ -85,8 +90,10 @@ public class GeneratorCli implements Callable<Integer> {
             return 1;
         }
 
-        String text = resourceAsString("empty-template/CMakeLists.txt");
-        text = text.replace("NewProject", projectDir.getName());
+        String text = resourceAsString("empty-template/CMakeLists.txt")
+                .replace("NewProject", projectDir.getName())
+                .replace("NewDescription", description);
+
         saveToFile(new File(projectDir, "CMakeLists.txt"), text);
 
         var srcDir = new File(projectDir, "src");
@@ -98,11 +105,7 @@ public class GeneratorCli implements Callable<Integer> {
         copyResourceTo("empty-template/main.cpp", srcDir);
         copyResourceTo("empty-template/CMakePresets.json", projectDir);
 
-        JSONObject object = resourceAsJson("empty-template/vcpkg.json");
-        object.replace("name", projectDir.getName().toLowerCase());
-        var dependencies = (JSONArray) object.get("dependencies");
-        dependencies.add("fmt");
-        saveToFile(new File(projectDir, "vcpkg.json"), object.toJSONString());
+        saveVcpkgJson(projectDir);
 
         File buildDir = new File(projectDir, "build");
 
@@ -111,6 +114,16 @@ public class GeneratorCli implements Callable<Integer> {
         generator.openVisualStudio(projectDir, buildDir);
 
         return 0;
+    }
+
+    private void saveVcpkgJson(File projectDir) {
+        JSONObject object = resourceAsJson("empty-template/vcpkg.json");
+        object.replace("name", projectDir.getName().toLowerCase());
+        object.replace("description", description);
+        var dependencies = (JSONArray) object.get("dependencies");
+        dependencies.add("fmt");
+
+        saveToFile(new File(projectDir, "vcpkg.json"), object.toJSONString());
     }
 
 }
