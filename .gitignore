@@ -1,3 +1,7 @@
+.idea/
+target/
+MwTest/
+
 # Compiled class file
 *.class
 
