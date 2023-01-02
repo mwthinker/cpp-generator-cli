@@ -33,6 +33,12 @@ public class GeneratorCli implements Callable<Integer> {
     @Option(names = { "-V", "--verbose" }, paramLabel = "VERBOSE", description = "show verbose output")
     private boolean verbose = false;
 
+    @Option(names = { "-c", "--cmake" }, paramLabel = "OPEN", description = "run cmake")
+    private boolean cmake = false;
+
+    @Option(names = { "-o", "--open" }, paramLabel = "OPEN", description = "open visual studio solution")
+    private boolean open = false;
+
     public GeneratorCli() {
     }
 
@@ -109,9 +115,13 @@ public class GeneratorCli implements Callable<Integer> {
 
         File buildDir = new File(projectDir, "build");
 
-        var generator = new CMakeGenerator();
-        generator.generate(projectDir, buildDir);
-        generator.openVisualStudio(projectDir, buildDir);
+        if (cmake || open) {
+            CMake.setVerbose(verbose);
+            CMake.generate(projectDir, buildDir);
+            if (open) {
+                CMake.openVisualStudio(projectDir, buildDir);
+            }
+        }
 
         return 0;
     }
