@@ -11,15 +11,18 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 
 public class ResourceHandler {
-    private String templateDir;
+    private final String templateDir;
 
     public ResourceHandler(String templateDir) {
         this.templateDir = templateDir;
     }
 
     public String resourceAsString(String resource) {
-        try {
-            return new String(getClass().getClassLoader().getResourceAsStream(templateDir + "/" + resource).readAllBytes());
+        try (var inputStreamer = getClass().getClassLoader().getResourceAsStream(getSystemResourceStr(resource))) {
+            if (inputStreamer == null) {
+                throw new RuntimeException();
+            }
+            return new String(inputStreamer.readAllBytes());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -27,7 +30,7 @@ public class ResourceHandler {
 
     public void copyResourceTo(String resource, File destDir) {
         try {
-            var resourceFile = new File(ClassLoader.getSystemResource(templateDir + "/" + resource).toURI());
+            var resourceFile = getSystemResourceFile(resource);
             Files.copy(resourceFile.toPath(), new File(destDir, resourceFile.getName()).toPath());
         } catch (URISyntaxException | IOException e) {
             throw new RuntimeException(e);
@@ -36,11 +39,19 @@ public class ResourceHandler {
 
     public JSONObject resourceAsJson(String resource) {
         try {
-            var resourceFile = new File(ClassLoader.getSystemResource(templateDir + "/" + resource).toURI());
+            var resourceFile = getSystemResourceFile(resource);
             JSONParser parser = new JSONParser();
-            return (JSONObject) parser.parse(new FileReader(resourceFile));
+            return (JSONObject) parser.parse(new FileReader(resourceFile.getName()));
         } catch (URISyntaxException | IOException | ParseException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private File getSystemResourceFile(String resource) throws URISyntaxException {
+        return new File(ClassLoader.getSystemResource(getSystemResourceStr(resource)).toURI());
+    }
+
+    private String getSystemResourceStr(String resource) {
+        return templateDir + "/" + resource;
     }
 }

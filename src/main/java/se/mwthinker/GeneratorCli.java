@@ -54,6 +54,14 @@ public class GeneratorCli implements Callable<Integer> {
         }
     }
 
+    private File createFolder(File parent, String folder) {
+        var newDir = new File(parent, folder);
+        if (!newDir.mkdir()) {
+            throw new RuntimeException();
+        }
+        return newDir;
+    }
+
     @Override
     public Integer call() {
         if (vcpkgPath == null) {
@@ -71,20 +79,16 @@ public class GeneratorCli implements Callable<Integer> {
                 .replace("NewDescription", description);
         saveToFile(new File(projectDir, "CMakeLists.txt"), text);
 
-        var srcDir = new File(projectDir, "src");
-        srcDir.mkdir();
-
-        var dataDir = new File(projectDir, "data");
-        dataDir.mkdir();
+        var srcDir = createFolder(projectDir, "src");
+        createFolder(projectDir, "data");
 
         resourceHandler.copyResourceTo("main.cpp", srcDir);
         resourceHandler.copyResourceTo("CMakePresets.json", projectDir);
 
         saveVcpkgJson(projectDir);
 
-        File buildDir = new File(projectDir, "build");
-
         if (cmake || open) {
+            File buildDir = createFolder(projectDir, "build");
             CMake.setVerbose(verbose);
             CMake.generate(projectDir, buildDir);
             if (open) {
