@@ -2,7 +2,7 @@ package se.mwthinker;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.io.InputStream;
 import java.nio.file.Files;
 
 public class ResourceHandler {
@@ -13,11 +13,11 @@ public class ResourceHandler {
     }
 
     public String resourceAsString(String resource) {
-        try (var inputStreamer = getClass().getClassLoader().getResourceAsStream(getSystemResourceStr(resource))) {
-            if (inputStreamer == null) {
+        try (var inputStream = getSystemResourceInputStream(resource)) {
+            if (inputStream == null) {
                 throw new RuntimeException();
             }
-            return new String(inputStreamer.readAllBytes());
+            return new String(inputStream.readAllBytes());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -25,18 +25,14 @@ public class ResourceHandler {
 
     public void copyResourceTo(String resource, File destDir) {
         try {
-            var resourceFile = getSystemResourceFile(resource);
-            Files.copy(resourceFile.toPath(), new File(destDir, resourceFile.getName()).toPath());
-        } catch (URISyntaxException | IOException e) {
+            var inputStream = getSystemResourceInputStream(resource);
+            Files.copy(inputStream, new File(destDir, resource).toPath());
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private File getSystemResourceFile(String resource) throws URISyntaxException {
-        return new File(ClassLoader.getSystemResource(getSystemResourceStr(resource)).toURI());
-    }
-
-    private String getSystemResourceStr(String resource) {
-        return templateDir + "/" + resource;
+    private InputStream getSystemResourceInputStream(String resource) {
+        return getClass().getClassLoader().getResourceAsStream(templateDir + "/" + resource);
     }
 }
