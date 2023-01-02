@@ -1,7 +1,5 @@
 package se.mwthinker;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -100,13 +98,12 @@ public class GeneratorCli implements Callable<Integer> {
     }
 
     private void saveVcpkgJson(File projectDir) {
-        JSONObject object = resourceHandler.resourceAsJson("vcpkg.json");
-        object.replace("name", projectDir.getName().toLowerCase());
-        object.replace("description", description);
-        var dependencies = (JSONArray) object.get("dependencies");
-        dependencies.add("fmt");
+        var vcpkgObject = new VcpkgObject();
+        vcpkgObject.setName(projectDir.getName().toLowerCase());
+        vcpkgObject.setDescription(description);
+        vcpkgObject.addDependency("fmt");
 
-        saveToFile(new File(projectDir, "vcpkg.json"), object.toJSONString());
+        vcpkgObject.saveToFile(new File(projectDir, "vcpkg.json"));
     }
 
 }

@@ -1,11 +1,6 @@
 package se.mwthinker;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -33,16 +28,6 @@ public class ResourceHandler {
             var resourceFile = getSystemResourceFile(resource);
             Files.copy(resourceFile.toPath(), new File(destDir, resourceFile.getName()).toPath());
         } catch (URISyntaxException | IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public JSONObject resourceAsJson(String resource) {
-        try {
-            var resourceFile = getSystemResourceFile(resource);
-            JSONParser parser = new JSONParser();
-            return (JSONObject) parser.parse(new FileReader(resourceFile.getName()));
-        } catch (URISyntaxException | IOException | ParseException e) {
             throw new RuntimeException(e);
         }
     }
