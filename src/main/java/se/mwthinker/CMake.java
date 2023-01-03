@@ -10,14 +10,13 @@ import java.io.IOException;
 
 abstract class CMake {
     static final private int WATCHDOG_TIME_MS = 20000;
-
     static private boolean verbose = false;
 
-    static void setVerbose(boolean verbose) {
+    public static void setVerbose(boolean verbose) {
         CMake.verbose = verbose;
     }
 
-    static public void generate(File projectDir, File buildDir) {
+    public static void generate(File projectDir, File buildDir) {
         var cmdLine = CommandLine.parse("cmake --preset " + getPreset() + " -B \"" + buildDir.getAbsolutePath() +"\"");
         DefaultExecutor executor = new DefaultExecutor();
         executor.setWorkingDirectory(projectDir);
@@ -30,7 +29,7 @@ abstract class CMake {
         }
     }
 
-    static public void openVisualStudio(File projectDir, File buildDir) {
+    public static void openVisualStudio(File projectDir, File buildDir) {
         if (!SystemUtils.IS_OS_WINDOWS) {
             return;
         }
@@ -51,11 +50,10 @@ abstract class CMake {
         }
     }
 
-    static private String getPreset() {
+    private static String getPreset() {
         if (SystemUtils.IS_OS_WINDOWS) {
             return "windows";
         }
         return "unix";
     }
-
 }

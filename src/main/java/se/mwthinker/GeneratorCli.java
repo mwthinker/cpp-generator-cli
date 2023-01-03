@@ -4,15 +4,12 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
-@Command(name = "cpp", mixinStandardHelpOptions = true, description = "Solves the 2021 05-problem")
+@Command(name = "cppgen", mixinStandardHelpOptions = true, description = "C++ generator")
 public class GeneratorCli implements Callable<Integer> {
     @Option(names = { "-n", "--new" }, required = true, paramLabel = "NEW", description = "the project name")
     private File projectDir;
@@ -32,6 +29,12 @@ public class GeneratorCli implements Callable<Integer> {
     @Option(names = { "-o", "--open" }, paramLabel = "OPEN", description = "open visual studio solution")
     private boolean open = false;
 
+    @Option(names = { "-g", "--gui" }, paramLabel = "GUI", description = "add gui library")
+    private boolean gui = false;
+
+    @Option(names = { "-t", "--test" }, paramLabel = "GUI", description = "add test")
+    private boolean test = false;
+
     private final ResourceHandler resourceHandler = new ResourceHandler("empty-template");
 
     public GeneratorCli() {
@@ -40,24 +43,6 @@ public class GeneratorCli implements Callable<Integer> {
     public static void main(String[] args) {
         int exitCode = new CommandLine(new GeneratorCli()).execute(args);
         System.exit(exitCode);
-    }
-
-    private void saveToFile(File file, String text) {
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-            writer.write(text);
-            writer.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private File createFolder(File parent, String folder) {
-        var newDir = new File(parent, folder);
-        if (!newDir.mkdir()) {
-            throw new RuntimeException();
-        }
-        return newDir;
     }
 
     @Override
@@ -72,21 +57,18 @@ public class GeneratorCli implements Callable<Integer> {
             return 1;
         }
 
-        String text = resourceHandler.resourceAsString("CMakeLists.txt")
-                .replace("NewProject", projectDir.getName())
-                .replace("NewDescription", description);
-        saveToFile(new File(projectDir, "CMakeLists.txt"), text);
+        CMakeBuilder cmakeBuilder = new CMakeBuilder(projectDir, resourceHandler)
+                .withDescription(description)
+                .addVcpkgDependency("fmt");
+        cmakeBuilder.buildFiles();
 
-        var srcDir = createFolder(projectDir, "src");
-        createFolder(projectDir, "data");
+        var srcDir = Util.createFolder(projectDir, "src");
+        Util.createFolder(projectDir, "data");
 
         resourceHandler.copyResourceTo("main.cpp", srcDir);
-        resourceHandler.copyResourceTo("CMakePresets.json", projectDir);
-
-        saveVcpkgJson(projectDir);
 
         if (cmake || open) {
-            File buildDir = createFolder(projectDir, "build");
+            File buildDir = Util.createFolder(projectDir, "build");
             CMake.setVerbose(verbose);
             CMake.generate(projectDir, buildDir);
             if (open) {
@@ -95,15 +77,6 @@ public class GeneratorCli implements Callable<Integer> {
         }
 
         return 0;
-    }
-
-    private void saveVcpkgJson(File projectDir) {
-        var vcpkgObject = new VcpkgObject();
-        vcpkgObject.setName(projectDir.getName().toLowerCase());
-        vcpkgObject.setDescription(description);
-        vcpkgObject.addDependency("fmt");
-
-        vcpkgObject.saveToFile(new File(projectDir, "vcpkg.json"));
     }
 
 }
