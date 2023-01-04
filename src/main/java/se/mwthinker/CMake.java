@@ -2,14 +2,12 @@ package se.mwthinker;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.File;
 import java.io.IOException;
 
 abstract class CMake {
-    static final private int WATCHDOG_TIME_MS = 20000;
     static private boolean verbose = false;
 
     public static void setVerbose(boolean verbose) {
@@ -20,7 +18,6 @@ abstract class CMake {
         var cmdLine = CommandLine.parse("cmake --preset " + getPreset() + " -B \"" + buildDir.getAbsolutePath() +"\"");
         DefaultExecutor executor = new DefaultExecutor();
         executor.setWorkingDirectory(projectDir);
-        executor.setWatchdog(new ExecuteWatchdog(WATCHDOG_TIME_MS));
 
         try {
             executor.execute(cmdLine);
@@ -36,7 +33,6 @@ abstract class CMake {
 
         DefaultExecutor executor = new DefaultExecutor();
         executor.setWorkingDirectory(buildDir);
-        executor.setWatchdog(new ExecuteWatchdog(WATCHDOG_TIME_MS));
 
         String openVisualStudioSolution = "cmd /C start devenv \"" + projectDir.getName() + ".sln\"";
         if (verbose) {
