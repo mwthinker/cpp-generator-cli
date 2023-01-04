@@ -35,8 +35,6 @@ public class GeneratorCli implements Callable<Integer> {
     @Option(names = { "-t", "--test" }, paramLabel = "GUI", description = "add test")
     private boolean test = false;
 
-    private final ResourceHandler resourceHandler = new ResourceHandler("empty-template");
-
     public GeneratorCli() {
     }
 
@@ -57,15 +55,46 @@ public class GeneratorCli implements Callable<Integer> {
             return 1;
         }
 
-        CMakeBuilder cmakeBuilder = new CMakeBuilder(projectDir, resourceHandler)
-                .withDescription(description)
-                .addVcpkgDependency("fmt");
-        cmakeBuilder.buildFiles();
-
         var srcDir = Util.createFolder(projectDir, "src");
         Util.createFolder(projectDir, "data");
 
-        resourceHandler.copyResourceTo("main.cpp", srcDir);
+        ResourceHandler resourceHandler;
+        if (gui) {
+            resourceHandler = new ResourceHandler("gui-template");
+        } else {
+            resourceHandler = new ResourceHandler("empty-template");
+        }
+
+        CMakeBuilder cmakeBuilder = new CMakeBuilder(projectDir, resourceHandler)
+                .withDescription(description);
+
+        if (gui) {
+            cmakeBuilder.addExternalProjects(
+                    "CppSdl2",
+                    "https://github.com/mwthinker/CppSdl2.git",
+                    "35b13c4393d586f0915778dbde7f29904aaa066c"
+            );
+
+            cmakeBuilder.addVcpkgDependency("sdl2")
+                    .addVcpkgDependency("sdl2-image")
+                    .addVcpkgDependency("sdl2-mixer")
+                    .addVcpkgDependency("sdl2-ttf")
+                    .addVcpkgDependency("glad")
+                    .addVcpkgDependency("spdlog")
+                    .addVcpkgDependency("glm")
+                    .addVcpkgDependency("fmt")
+                    .addVcpkgDependency("freetype")
+                    .addVcpkgDependency("glbinding")
+                    .addVcpkgDependency("gtest");
+            resourceHandler.copyResourceTo("main.cpp", srcDir);
+            resourceHandler.copyResourceTo("testwindow.cpp", srcDir);
+            resourceHandler.copyResourceTo("testwindow.h", srcDir);
+        } else {
+            cmakeBuilder.addVcpkgDependency("fmt");
+            resourceHandler.copyResourceTo("main.cpp", srcDir);
+        }
+
+        cmakeBuilder.buildFiles();
 
         if (cmake || open) {
             File buildDir = Util.createFolder(projectDir, "build");
