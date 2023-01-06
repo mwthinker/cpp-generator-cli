@@ -17,6 +17,10 @@ public class Github {
     public Github() {
     }
 
+    public String getRepositoryUrl(String owner, String repo) {
+        return "https://github.com/" + owner + "/" + repo + ".git"; // TODO! May not work for every type of repository?
+    }
+
     public String fetchLatestCommitSHA(String owner, String repo) {
         Request request = new Request.Builder()
                 .url("https://api.github.com/repos/" + owner + "/" + repo + "/commits?per_page=1&page=1")

@@ -2,7 +2,7 @@ package se.mwthinker;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -23,7 +23,7 @@ public class CMakeBuilder {
     private final File projectDir;
     private final ResourceHandler resourceHandler;
     private final List<ExternalProject> externalProjects = new ArrayList<>();
-    private final Set<String> vcpkgDependencies = new HashSet<>();
+    private final Set<String> vcpkgDependencies = new LinkedHashSet<>(); // Want to element keep order (to make it easier for a human to read).
     private String description = "Description";
 
     public CMakeBuilder(File projectDir, ResourceHandler resourceHandler) {
@@ -38,6 +38,11 @@ public class CMakeBuilder {
 
     public CMakeBuilder addVcpkgDependency(String dependency) {
         vcpkgDependencies.add(dependency);
+        return this;
+    }
+
+    public CMakeBuilder addVcpkgDependencies(List<String> dependencies) {
+        vcpkgDependencies.addAll(dependencies);
         return this;
     }
 
