@@ -1,5 +1,6 @@
 package se.mwthinker;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @JsonPropertyOrder({ "name", "version-string", "port-version", "homepage", "description", "license", "dependencies" })
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class VcpkgObject {
 
     @JsonProperty("name")
@@ -31,7 +33,7 @@ public class VcpkgObject {
     private String license = "MIT";
 
     @JsonProperty("dependencies")
-    private List<String> dependencies = new ArrayList<>();
+    private final List<String> dependencies = new ArrayList<>();
 
     public String getName() {
         return name;
