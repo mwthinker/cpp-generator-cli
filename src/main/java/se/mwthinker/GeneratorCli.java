@@ -66,7 +66,8 @@ public class GeneratorCli implements Callable<Integer> {
         }
 
         CMakeBuilder cmakeBuilder = new CMakeBuilder(projectDir, resourceHandler)
-                .withDescription(description);
+                .withDescription(description)
+                .withTestProject(test);
 
         if (gui) {
             Github github = new Github();

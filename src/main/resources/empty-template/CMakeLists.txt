@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 project(NewProject
 	DESCRIPTION
-		NewDescription
+		"NewDescription"
 	VERSION
 		0.1.0
 	LANGUAGES
@@ -20,6 +20,8 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT N
 
 ExternalProjects
 find_package(fmt CONFIG REQUIRED)
+
+AddTestProject
 
 if (MSVC)
 	target_compile_options(NewProject

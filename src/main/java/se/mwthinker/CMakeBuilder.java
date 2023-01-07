@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 public class CMakeBuilder {
+
     private record ExternalProject(String name, String gitUrl, String gitTag) {
         @Override
         public String toString() {
@@ -20,6 +21,7 @@ public class CMakeBuilder {
         }
     }
 
+    private boolean testProject;
     private final File projectDir;
     private final ResourceHandler resourceHandler;
     private final List<ExternalProject> externalProjects = new ArrayList<>();
@@ -57,6 +59,11 @@ public class CMakeBuilder {
         return this;
     }
 
+    public CMakeBuilder withTestProject(boolean addTestProject) {
+        this.testProject = addTestProject;
+        return this;
+    }
+
     public void buildFiles() {
         if (sources.isEmpty()) {
             throw new RuntimeException("Must at least have one source file");
@@ -82,13 +89,41 @@ public class CMakeBuilder {
         vcpkgObject.setName(projectDir.getName().toLowerCase());
         vcpkgObject.setDescription(description);
         vcpkgDependencies.forEach(vcpkgObject::addDependency);
+        if (testProject) {
+            vcpkgObject.addDependency("gtest");
+        }
         vcpkgObject.saveToFile(new File(projectDir, "vcpkg.json"));
+
+        if (testProject) {
+            buildTestProject();
+        }
+    }
+
+    private String getTestProjectName() {
+        return projectDir.getName() + "_Test";
+    }
+
+    private CMakeBuilder buildTestProject() {
+        String text = resourceHandler.resourceAsString("Test_CMakeLists.cmake")
+                .replace("NewProject", getTestProjectName());
+
+        File testProjectDir = Util.createFolder(projectDir, getTestProjectName());
+        Util.saveToFile(new File(testProjectDir, "CMakeLists.txt"), text);
+        File sourceDir = Util.createFolder(testProjectDir, "src");
+        resourceHandler.copyResourceTo("tests.cpp", sourceDir);
+        return this;
     }
 
     private void saveCMakeListsTxt() {
         String text = resourceHandler.resourceAsString("CMakeLists.txt")
                 .replace("NewProject", projectDir.getName())
                 .replace("NewDescription", description);
+
+        if (testProject) {
+            text = text.replace("AddTestProject", "add_subdirectory(" + getTestProjectName() + ")");
+        } else {
+            text = text.replace("AddTestProject", "");
+        }
 
         StringBuilder sourcesBuilder = new StringBuilder();
         for (var source : sources) {
@@ -110,7 +145,7 @@ public class CMakeBuilder {
                     """);
 
             String findPackages = """
-                    set(ExternalDependencies 
+                    set(ExternalDependencies
                     \tLinkExternalLibraries)
                     
                     include(ExternalFetchContent.cmake)

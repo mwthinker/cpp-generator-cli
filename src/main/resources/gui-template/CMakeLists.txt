@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 project(NewProject
 	DESCRIPTION
-		NewDescription
+		"NewDescription"
 	VERSION
 		0.1.0
 	LANGUAGES
@@ -21,6 +21,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS On)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT NewProject)
 
 ExternalProjects
+AddTestProject
 
 set_target_properties(
 	${ExternalDependencies}
