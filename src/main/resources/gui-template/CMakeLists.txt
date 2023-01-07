@@ -12,9 +12,7 @@ project(NewProject
 file(COPY data/. DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(NewProject
-	src/main.cpp
-	src/testwindow.cpp
-	src/testwindow.h
+	Sources
 	ExtraFiles)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS On)

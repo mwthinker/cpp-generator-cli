@@ -33,6 +33,10 @@ public class ResourceHandler {
     }
 
     private InputStream getSystemResourceInputStream(String resource) {
-        return getClass().getClassLoader().getResourceAsStream(templateDir + "/" + resource);
+       var stream = getClass().getClassLoader().getResourceAsStream(templateDir + "/" + resource);
+       if (stream == null) {
+           stream = getClass().getClassLoader().getResourceAsStream(resource);
+       }
+       return stream;
     }
 }
