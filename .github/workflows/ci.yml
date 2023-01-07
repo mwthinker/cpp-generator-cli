@@ -10,13 +10,13 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            vcpkgCommitId: '927006b24c3a28dfd8aa0ec5f8ce43098480a7f1'
+            vcpkgCommitId: '3776224fd28bd7e0c78617d73696753219e8d272'
             preset: 'windows'
-          - os: ubuntu-22.04
-            vcpkgCommitId: '927006b24c3a28dfd8aa0ec5f8ce43098480a7f1'
+          - os: ubuntu-latest
+            vcpkgCommitId: '3776224fd28bd7e0c78617d73696753219e8d272'
             preset: 'unix'
           - os: macos-12
-            vcpkgCommitId: '927006b24c3a28dfd8aa0ec5f8ce43098480a7f1'
+            vcpkgCommitId: '3776224fd28bd7e0c78617d73696753219e8d272'
             preset: 'unix'
 
     steps:
@@ -32,3 +32,29 @@ jobs:
       - name: Run Maven install
         shell: bash
         run: mvn clean install
+
+      - name: Run jar file
+        shell: bash
+        run: java -jar target/cpp-generator-cli*jar-with-dependencies.jar --new CppProject --test --cmake
+
+      - name: Set C++/C compiler on macOS
+        shell: bash
+        run: echo "CC=$(brew --prefix llvm@14)/bin/clang" >> $GITHUB_ENV; echo "CXX=$(brew --prefix llvm@14)/bin/clang++" >> $GITHUB_ENV; cat "$GITHUB_ENV"
+        if: runner.os == 'macOS'
+
+      - uses: friendlyanon/setup-vcpkg@v1
+        with:
+          committish: ${{ matrix.vcpkgCommitId }}
+          cache: true
+
+      - name: Run CMake with manifest mode vcpkg
+        shell: bash
+        run: |
+          cd target/CppProject
+          cmake --preset=${{ matrix.preset }} -B build -DCMAKE_VERBOSE_MAKEFILE=1
+
+      - name: Compile C++ project
+        shell: bash
+        run: |
+          cd target/CppProject
+          cmake --build build
