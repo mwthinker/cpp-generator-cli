@@ -13,13 +13,12 @@ file(COPY data/. DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(NewProject
 	src/main.cpp
+	ExtraFiles)
 
-	CMakePresets.json
-	vcpkg.json
-)
-
+set_property(GLOBAL PROPERTY USE_FOLDERS On)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT NewProject)
 
+ExternalProjects
 find_package(fmt CONFIG REQUIRED)
 
 if (MSVC)
@@ -37,6 +36,7 @@ endif ()
 
 target_link_libraries(NewProject
 	PRIVATE
+		${ExternalDependencies}
 		fmt::fmt-header-only
 )
 

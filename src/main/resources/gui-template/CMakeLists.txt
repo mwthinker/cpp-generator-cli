@@ -15,17 +15,19 @@ add_executable(NewProject
 	src/main.cpp
 	src/testwindow.cpp
 	src/testwindow.h
+	ExtraFiles)
 
-    ExternalFetchContent.cmake
-	CMakePresets.json
-	vcpkg.json
-)
-
+set_property(GLOBAL PROPERTY USE_FOLDERS On)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT NewProject)
 
-include(ExternalFetchContent.cmake)
+ExternalProjects
 
-find_package(CppSdl2 REQUIRED)
+set_target_properties(
+	${ExternalDependencies}
+
+	PROPERTIES FOLDER
+		ExternalDependencies
+)
 
 if (MSVC)
 	target_compile_options(NewProject
@@ -42,7 +44,7 @@ endif ()
 
 target_link_libraries(NewProject
 	PRIVATE
-		CppSdl2
+		${ExternalDependencies}
 )
 
 set_target_properties(NewProject

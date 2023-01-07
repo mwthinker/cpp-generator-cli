@@ -52,10 +52,7 @@ public class CMakeBuilder {
     }
 
     public void buildFiles() {
-        String text = resourceHandler.resourceAsString("CMakeLists.txt")
-                .replace("NewProject", projectDir.getName())
-                .replace("NewDescription", description);
-        Util.saveToFile(new File(projectDir, "CMakeLists.txt"), text);
+        saveCMakeListsTxt();
 
         if (!externalProjects.isEmpty()) {
             StringBuilder content = new StringBuilder("include(FetchContent)\n\n");
@@ -74,10 +71,47 @@ public class CMakeBuilder {
         var vcpkgObject = new VcpkgObject();
         vcpkgObject.setName(projectDir.getName().toLowerCase());
         vcpkgObject.setDescription(description);
-        for (var dependency : vcpkgDependencies) {
-            vcpkgObject.addDependency(dependency);
-        }
+        vcpkgDependencies.forEach(vcpkgObject::addDependency);
         vcpkgObject.saveToFile(new File(projectDir, "vcpkg.json"));
+    }
+
+    private void saveCMakeListsTxt() {
+        String text = resourceHandler.resourceAsString("CMakeLists.txt")
+                .replace("NewProject", projectDir.getName())
+                .replace("NewDescription", description);
+
+        if (externalProjects.isEmpty()) {
+            text = text.replace("ExternalProjects", "");
+            text = text.replace("ExtraFiles", """
+                    
+                    \tCMakePresets.json
+                    \tvcpkg.json
+                    """);
+        } else {
+            text = text.replace("ExtraFiles", """
+                    
+                    \tCMakePresets.json
+                    \tvcpkg.json
+                    """);
+
+            String findPackages = """
+                    set(ExternalDependencies 
+                    \tLinkExternalLibraries)
+                    
+                    include(ExternalFetchContent.cmake)
+                    foreach(Dependency IN LISTS ExternalDependencies)
+                    \tfind_package(${Dependency} REQUIRED)
+                    endforeach()""";
+            text = text.replace("ExternalProjects", findPackages);
+
+            StringBuilder linkExternalLibraries = new StringBuilder();
+            for (String name : externalProjects.stream().map(ExternalProject::name).toList()) {
+                linkExternalLibraries.append(name).append("\n");
+            }
+            text = text.replace("LinkExternalLibraries", linkExternalLibraries.toString());
+        }
+
+        Util.saveToFile(new File(projectDir, "CMakeLists.txt"), text);
     }
 
 }
