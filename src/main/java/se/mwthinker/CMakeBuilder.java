@@ -24,6 +24,7 @@ public class CMakeBuilder {
     private final ResourceHandler resourceHandler;
     private final List<ExternalProject> externalProjects = new ArrayList<>();
     private final Set<String> vcpkgDependencies = new LinkedHashSet<>(); // Want to element keep order (to make it easier for a human to read).
+    private final Set<String> sources = new LinkedHashSet<>();
     private String description = "Description";
 
     public CMakeBuilder(File projectDir, ResourceHandler resourceHandler) {
@@ -51,7 +52,16 @@ public class CMakeBuilder {
         return this;
     }
 
+    public CMakeBuilder addSource(String source) {
+        sources.add(source);
+        return this;
+    }
+
     public void buildFiles() {
+        if (sources.isEmpty()) {
+            throw new RuntimeException("Must at least have one source file");
+        }
+
         saveCMakeListsTxt();
 
         if (!externalProjects.isEmpty()) {
@@ -80,10 +90,15 @@ public class CMakeBuilder {
                 .replace("NewProject", projectDir.getName())
                 .replace("NewDescription", description);
 
+        StringBuilder sourcesBuilder = new StringBuilder();
+        for (var source : sources) {
+            sourcesBuilder.append("\t").append(source).append("\n");
+        }
+        text = text.replace("Sources", sourcesBuilder.toString());
+
         if (externalProjects.isEmpty()) {
             text = text.replace("ExternalProjects", "");
             text = text.replace("ExtraFiles", """
-                    
                     \tCMakePresets.json
                     \tvcpkg.json
                     """);

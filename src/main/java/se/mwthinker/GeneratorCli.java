@@ -72,21 +72,25 @@ public class GeneratorCli implements Callable<Integer> {
             Github github = new Github();
             var repositoryUrl = github.getRepositoryUrl("mwthinker", "CppSdl2");
             String commitSha = github.fetchLatestCommitSHA("mwthinker", "CppSdl2");
-
-            cmakeBuilder.addExternalProjects(
-                    "CppSdl2",
-                    repositoryUrl,
-                    commitSha
-            );
-
             var vcpkgObject = github.fetchVcpkgObject("mwthinker", "CppSdl2", commitSha);
-            cmakeBuilder.addVcpkgDependencies(vcpkgObject.getDependencies());
+
+            cmakeBuilder
+                    .addExternalProjects(
+                            "CppSdl2",
+                            repositoryUrl,
+                            commitSha)
+                    .addSource("src/main.cpp")
+                    .addSource("src/testwindow.cpp")
+                    .addSource("src/testwindow.h")
+                    .addVcpkgDependencies(vcpkgObject.getDependencies());
 
             resourceHandler.copyResourceTo("main.cpp", srcDir);
             resourceHandler.copyResourceTo("testwindow.cpp", srcDir);
             resourceHandler.copyResourceTo("testwindow.h", srcDir);
         } else {
-            cmakeBuilder.addVcpkgDependency("fmt");
+            cmakeBuilder
+                    .addSource("src/main.cpp")
+                    .addVcpkgDependency("fmt");
             resourceHandler.copyResourceTo("main.cpp", srcDir);
         }
 
