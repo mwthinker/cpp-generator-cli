@@ -5,17 +5,12 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 @Command(name = "cppgen", mixinStandardHelpOptions = true, description = "C++ generator")
 public class GeneratorCli implements Callable<Integer> {
     @Option(names = { "-n", "--new" }, required = true, paramLabel = "NEW", description = "the project name")
     private File projectDir;
-
-    @Option(names = { "-v", "--vcpkg" }, paramLabel = "VCPKG_ROOT", description = "the directory containing the vcpkg repository (overrides the env variable)")
-    private Path vcpkgPath;
 
     @Option(names = { "-d", "--description" }, paramLabel = "DESCRIPTION ", description = "short description used in the template")
     private String description = "Description";
@@ -45,11 +40,6 @@ public class GeneratorCli implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        if (vcpkgPath == null) {
-            String vcpkgRootStr = System.getenv("VCPKG_ROOT");
-            vcpkgPath = Paths.get(vcpkgRootStr);
-        }
-
         if (projectDir.exists() || !projectDir.mkdir()) {
             System.out.println("Failed to create project folder");
             return 1;
