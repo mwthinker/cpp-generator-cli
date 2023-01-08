@@ -33,6 +33,11 @@ jobs:
         shell: bash
         run: mvn clean install
 
+      - uses: friendlyanon/setup-vcpkg@v1
+        with:
+          committish: ${{ matrix.vcpkgCommitId }}
+          cache: true
+
       - name: Run jar file
         shell: bash
         run: java -jar target/cpp-generator-cli*jar-with-dependencies.jar --new CppProject --test --cmake
@@ -41,11 +46,6 @@ jobs:
         shell: bash
         run: echo "CC=$(brew --prefix llvm@14)/bin/clang" >> $GITHUB_ENV; echo "CXX=$(brew --prefix llvm@14)/bin/clang++" >> $GITHUB_ENV; cat "$GITHUB_ENV"
         if: runner.os == 'macOS'
-
-      - uses: friendlyanon/setup-vcpkg@v1
-        with:
-          committish: ${{ matrix.vcpkgCommitId }}
-          cache: true
 
       - name: Run CMake with manifest mode vcpkg
         shell: bash
