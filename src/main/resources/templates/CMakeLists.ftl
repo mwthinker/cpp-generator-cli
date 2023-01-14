@@ -13,7 +13,7 @@ project(${projectName}
 # Copy data to build folder.
 file(COPY data/. DESTINATION ${r"${CMAKE_CURRENT_BINARY_DIR}"})
 
-add_executable(${projectName}
+set(SOURCES
 <#list sources as source>
 	${source}
 </#list>
@@ -25,8 +25,17 @@ add_executable(${projectName}
 </#if>
 )
 
+add_executable(${projectName}
+	${r"${SOURCES}"}
+)
+
 set_property(GLOBAL PROPERTY USE_FOLDERS On)
 set_property(DIRECTORY ${r"${CMAKE_CURRENT_SOURCE_DIR}"} PROPERTY VS_STARTUP_PROJECT ${projectName})
+source_group(TREE
+	${r"${CMAKE_CURRENT_SOURCE_DIR}"}
+	FILES
+		${r"${SOURCES}"}
+)
 
 <#if linkExternalLibraries?has_content>
 set(ExternalDependencies
