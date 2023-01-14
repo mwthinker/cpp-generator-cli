@@ -1,4 +1,4 @@
-# cpp-generator-cli [![CI build](https://github.com/mwthinker/CppSdl2/actions/workflows/ci.yml/badge.svg)](https://github.com/mwthinker/cpp-generator-cli/actions/workflows/ci.yml)
+# cpp-generator-cli [![CI build](https://github.com/mwthinker/cpp-generator-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/mwthinker/cpp-generator-cli/actions/workflows/ci.yml)
 A java application based on JDK 19 and maven. Implements a C++ generator CLI.
 
 ## How to use
