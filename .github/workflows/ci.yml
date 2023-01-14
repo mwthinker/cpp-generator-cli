@@ -15,7 +15,7 @@ jobs:
           - os: ubuntu-latest
             vcpkgCommitId: '3776224fd28bd7e0c78617d73696753219e8d272'
             preset: 'unix'
-          - os: macos-12
+          - os: macos-lates
             vcpkgCommitId: '3776224fd28bd7e0c78617d73696753219e8d272'
             preset: 'unix'
 
@@ -38,9 +38,19 @@ jobs:
           committish: ${{ matrix.vcpkgCommitId }}
           cache: true
 
-      - name: Run jar file
+      - name: Run jar file Unix
         shell: bash
-        run: java -jar target/cpp-generator-cli*jar-with-dependencies.jar --new CppProject --test --cmake
+        run: |
+          cd target
+          ./cpp-generator --new CppProject --test --cmake
+        if: runner.os != 'Windows'
+        
+      - name: Run jar file Windows
+        shell: bash
+        run: |
+          cd target
+          ./cpp-generator.exe --new CppProject --test --cmake
+        if: runner.os == 'Windows'
 
       - name: Set C++/C compiler on macOS
         shell: bash

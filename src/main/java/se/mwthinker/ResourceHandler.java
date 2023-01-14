@@ -18,6 +18,7 @@ public class ResourceHandler {
         this.cfg = new Configuration(Configuration.VERSION_2_3_29);
 
         try {
+            cfg.setDefaultEncoding("UTF-8");
             cfg.setDirectoryForTemplateLoading(new File(getClass().getClassLoader().getResource("templates").toURI()));
         } catch (IOException | URISyntaxException e) {
             throw new RuntimeException(e);
