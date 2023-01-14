@@ -1,12 +1,12 @@
 package se.mwthinker;
 
+import freemarker.cache.ClassTemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 
 public class ResourceHandler {
@@ -15,14 +15,10 @@ public class ResourceHandler {
 
     public ResourceHandler(String templateDir) {
         this.templateDir = templateDir;
-        this.cfg = new Configuration(Configuration.VERSION_2_3_29);
 
-        try {
-            cfg.setDefaultEncoding("UTF-8");
-            cfg.setDirectoryForTemplateLoading(new File(getClass().getClassLoader().getResource("templates").toURI()));
-        } catch (IOException | URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+        cfg = new Configuration(Configuration.VERSION_2_3_29);
+        cfg.setDefaultEncoding("UTF-8");
+        cfg.setTemplateLoader(new ClassTemplateLoader(ResourceHandler.class, "/templates/"));
     }
 
     public Template getTemplate(String templateSrc) {
