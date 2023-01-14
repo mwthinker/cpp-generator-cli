@@ -18,7 +18,6 @@ add_executable(${projectName}
 	${source}
 </#list>
 <#if extraFiles?has_content>
-	${'\n'}
 	<#list extraFiles as extraFile>
 	${extraFile}
 	</#list>

@@ -55,7 +55,7 @@ public class CMakeBuilder {
     }
 
     public CMakeBuilder addExtraFile(String file) {
-        sources.add(file);
+        extraFiles.add(file);
         return this;
     }
 
