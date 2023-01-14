@@ -42,16 +42,14 @@ jobs:
         shell: bash
         run: |
           cd target
-          ls -ltr
-          ./cpp-generator --new CppProject --test --cmake
+          ./cppgen --new CppProject --test --cmake
         if: runner.os != 'Windows'
 
       - name: Run binary file Windows
         shell: bash
         run: |
           cd target
-          ls -ltr
-          ./cpp-generator.exe --new CppProject --test --cmake
+          ./cppgen.exe --new CppProject --test --cmake
         if: runner.os == 'Windows'
 
       - name: Set C++/C compiler on macOS
