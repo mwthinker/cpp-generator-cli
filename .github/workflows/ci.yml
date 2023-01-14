@@ -60,11 +60,11 @@ jobs:
       - name: Run CMake with manifest mode vcpkg
         shell: bash
         run: |
-          cd CppProject
+          cd target/CppProject
           cmake --preset=${{ matrix.preset }} -B build -DCMAKE_VERBOSE_MAKEFILE=1
 
       - name: Compile C++ project
         shell: bash
         run: |
-          cd CppProject
+          cd target/CppProject
           cmake --build build
