@@ -38,17 +38,19 @@ jobs:
           committish: ${{ matrix.vcpkgCommitId }}
           cache: true
 
-      - name: Run jar file Unix
+      - name: Run binary file Unix
         shell: bash
         run: |
           cd target
+          ls -ltr
           ./cpp-generator --new CppProject --test --cmake
         if: runner.os != 'Windows'
-        
-      - name: Run jar file Windows
+
+      - name: Run binary file Windows
         shell: bash
         run: |
           cd target
+          ls -ltr
           ./cpp-generator.exe --new CppProject --test --cmake
         if: runner.os == 'Windows'
 
