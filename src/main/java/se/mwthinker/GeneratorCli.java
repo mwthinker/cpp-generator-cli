@@ -27,7 +27,7 @@ public class GeneratorCli implements Callable<Integer> {
     @Option(names = { "-g", "--gui" }, paramLabel = "GUI", description = "add gui library")
     private boolean gui = false;
 
-    @Option(names = { "-t", "--test" }, paramLabel = "GUI", description = "add test")
+    @Option(names = { "-t", "--test" }, paramLabel = "TEST", description = "add test")
     private boolean test = false;
 
     public GeneratorCli() {
@@ -57,7 +57,9 @@ public class GeneratorCli implements Callable<Integer> {
 
         CMakeBuilder cmakeBuilder = new CMakeBuilder(projectDir, resourceHandler)
                 .withDescription(description)
-                .withTestProject(test);
+                .withTestProject(test)
+                .addExtraFile("CMakePresets.json")
+                .addExtraFile("vcpkg.json");
 
         if (gui) {
             Github github = new Github();
@@ -73,6 +75,7 @@ public class GeneratorCli implements Callable<Integer> {
                     .addSource("src/main.cpp")
                     .addSource("src/testwindow.cpp")
                     .addSource("src/testwindow.h")
+                    .addExtraFile("ExternalFetchContent.cmake")
                     .addVcpkgDependencies(vcpkgObject.getDependencies());
 
             resourceHandler.copyResourceTo("main.cpp", srcDir);

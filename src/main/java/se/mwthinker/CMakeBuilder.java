@@ -1,25 +1,19 @@
 package se.mwthinker;
 
+import freemarker.template.TemplateException;
+
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class CMakeBuilder {
-
-    private record ExternalProject(String name, String gitUrl, String gitTag) {
-        @Override
-        public String toString() {
-            return "FetchContent_Declare(" + name + "\n" +
-                    "\tGIT_REPOSITORY\n" +
-                    "\t\t" + gitUrl + "\n" +
-                    "\tGIT_TAG\n" +
-                    "\t\t"+ gitTag + "\n" +
-                    "\tOVERRIDE_FIND_PACKAGE\n" +
-                    ")";
-        }
-    }
+    public record ExternalProject(String name, String gitUrl, String gitTag) {}
 
     private boolean testProject;
     private final File projectDir;
@@ -27,6 +21,7 @@ public class CMakeBuilder {
     private final List<ExternalProject> externalProjects = new ArrayList<>();
     private final Set<String> vcpkgDependencies = new LinkedHashSet<>(); // Want to element keep order (to make it easier for a human to read).
     private final Set<String> sources = new LinkedHashSet<>();
+    private final Set<String> extraFiles = new LinkedHashSet<>();
     private String description = "Description";
 
     public CMakeBuilder(File projectDir, ResourceHandler resourceHandler) {
@@ -59,6 +54,11 @@ public class CMakeBuilder {
         return this;
     }
 
+    public CMakeBuilder addExtraFile(String file) {
+        sources.add(file);
+        return this;
+    }
+
     public CMakeBuilder withTestProject(boolean addTestProject) {
         this.testProject = addTestProject;
         return this;
@@ -72,11 +72,16 @@ public class CMakeBuilder {
         saveCMakeListsTxt();
 
         if (!externalProjects.isEmpty()) {
-            StringBuilder content = new StringBuilder("include(FetchContent)\n\n");
-            for (var item : externalProjects) {
-                content.append(item);
+            Map<String, Object> data = new HashMap<>();
+            data.put("externalProjects", externalProjects);
+
+            try (FileWriter writer = new FileWriter(new File(projectDir, "ExternalFetchContent.cmake"))) {
+                resourceHandler
+                        .getTemplate("ExternalFetchContent.ftl")
+                        .process(data, writer);
+            } catch (IOException | TemplateException e) {
+                throw new RuntimeException(e);
             }
-            Util.saveToFile(new File(projectDir, "ExternalFetchContent.cmake"), content.toString());
         }
 
         saveVcpkgJson();
@@ -104,64 +109,46 @@ public class CMakeBuilder {
     }
 
     private CMakeBuilder buildTestProject() {
-        String text = resourceHandler.resourceAsString("Test_CMakeLists.cmake")
-                .replace("NewProject", getTestProjectName());
-
         File testProjectDir = Util.createFolder(projectDir, getTestProjectName());
-        Util.saveToFile(new File(testProjectDir, "CMakeLists.txt"), text);
         File sourceDir = Util.createFolder(testProjectDir, "src");
         resourceHandler.copyResourceTo("tests.cpp", sourceDir);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("projectName", getTestProjectName());
+        data.put("extraFiles", List.of("CMakeLists.txt"));
+
+        try (FileWriter writer = new FileWriter(new File(testProjectDir, "CMakeLists.txt"))){
+            resourceHandler
+                    .getTemplate("Test_CMakeLists.ftl")
+                    .process(data, writer);
+        } catch (IOException | TemplateException e) {
+            throw new RuntimeException(e);
+        }
+
         return this;
     }
 
     private void saveCMakeListsTxt() {
-        String text = resourceHandler.resourceAsString("CMakeLists.txt")
-                .replace("NewProject", projectDir.getName())
-                .replace("NewDescription", description);
-
+        Map<String, Object> data = new HashMap<>();
+        data.put("projectName", projectDir.getName());
+        data.put("description", description);
+        data.put("sources", sources);
+        data.put("vcpkgDependencies", vcpkgDependencies);
         if (testProject) {
-            text = text.replace("AddTestProject", "add_subdirectory(" + getTestProjectName() + ")");
-        } else {
-            text = text.replace("AddTestProject", "");
+            data.put("testProjectName", getTestProjectName());
         }
-
-        StringBuilder sourcesBuilder = new StringBuilder();
-        for (var source : sources) {
-            sourcesBuilder.append("\t").append(source).append("\n");
+        if (!externalProjects.isEmpty()) {
+            data.put("linkExternalLibraries", externalProjects);
         }
-        text = text.replace("Sources", sourcesBuilder.toString());
+        data.put("extraFiles", extraFiles);
 
-        if (externalProjects.isEmpty()) {
-            text = text.replace("ExternalProjects", "");
-            text = text.replace("ExtraFiles", """
-                    \tCMakePresets.json
-                    \tvcpkg.json
-                    """);
-        } else {
-            text = text.replace("ExtraFiles", """
-                    
-                    \tCMakePresets.json
-                    \tvcpkg.json
-                    """);
-
-            String findPackages = """
-                    set(ExternalDependencies
-                    \tLinkExternalLibraries)
-                    
-                    include(ExternalFetchContent.cmake)
-                    foreach(Dependency IN LISTS ExternalDependencies)
-                    \tfind_package(${Dependency} REQUIRED)
-                    endforeach()""";
-            text = text.replace("ExternalProjects", findPackages);
-
-            StringBuilder linkExternalLibraries = new StringBuilder();
-            for (String name : externalProjects.stream().map(ExternalProject::name).toList()) {
-                linkExternalLibraries.append(name).append("\n");
-            }
-            text = text.replace("LinkExternalLibraries", linkExternalLibraries.toString());
+        try (FileWriter writer = new FileWriter(new File(projectDir, "CMakeLists.txt"))){
+            resourceHandler
+                    .getTemplate("CMakeLists.ftl")
+                    .process(data, writer);
+        } catch (IOException | TemplateException e) {
+            throw new RuntimeException(e);
         }
-
-        Util.saveToFile(new File(projectDir, "CMakeLists.txt"), text);
     }
 
 }
