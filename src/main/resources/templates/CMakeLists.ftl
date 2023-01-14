@@ -18,6 +18,7 @@ add_executable(${projectName}
 	${source}
 </#list>
 <#if extraFiles?has_content>
+	
 	<#list extraFiles as extraFile>
 	${extraFile}
 	</#list>
@@ -70,8 +71,8 @@ endif ()
 target_link_libraries(${projectName}
 	PRIVATE
 		${r"${ExternalDependencies}"}
-<#list vcpkgDependencies as dependency>
-		${dependency}::${dependency}
+<#list linkLibraries as library>
+		${library}
 </#list>
 )
 

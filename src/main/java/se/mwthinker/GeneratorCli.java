@@ -62,21 +62,12 @@ public class GeneratorCli implements Callable<Integer> {
                 .addExtraFile("vcpkg.json");
 
         if (gui) {
-            Github github = new Github();
-            var repositoryUrl = github.getRepositoryUrl("mwthinker", "CppSdl2");
-            String commitSha = github.fetchLatestCommitSHA("mwthinker", "CppSdl2");
-            var vcpkgObject = github.fetchVcpkgObject("mwthinker", "CppSdl2", commitSha);
-
             cmakeBuilder
-                    .addExternalProjects(
-                            "CppSdl2",
-                            repositoryUrl,
-                            commitSha)
+                    .addExternalProjectsWithDependencies("mwthinker","CppSdl2")
                     .addSource("src/main.cpp")
                     .addSource("src/testwindow.cpp")
                     .addSource("src/testwindow.h")
-                    .addExtraFile("ExternalFetchContent.cmake")
-                    .addVcpkgDependencies(vcpkgObject.getDependencies());
+                    .addExtraFile("ExternalFetchContent.cmake");
 
             resourceHandler.copyResourceTo("main.cpp", srcDir);
             resourceHandler.copyResourceTo("testwindow.cpp", srcDir);
@@ -84,7 +75,9 @@ public class GeneratorCli implements Callable<Integer> {
         } else {
             cmakeBuilder
                     .addSource("src/main.cpp")
-                    .addVcpkgDependency("fmt");
+                    .addVcpkgDependency("fmt")
+                    .addLinkLibrary("fmt::fmt");
+
             resourceHandler.copyResourceTo("main.cpp", srcDir);
         }
 

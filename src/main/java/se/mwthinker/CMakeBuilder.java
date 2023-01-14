@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +20,9 @@ public class CMakeBuilder {
     private final File projectDir;
     private final ResourceHandler resourceHandler;
     private final List<ExternalProject> externalProjects = new ArrayList<>();
+    private final List<VcpkgObject> vcpkgObjects = new ArrayList<>();
     private final Set<String> vcpkgDependencies = new LinkedHashSet<>(); // Want to element keep order (to make it easier for a human to read).
+    private final Set<String> linkLibraries = new LinkedHashSet<>();
     private final Set<String> sources = new LinkedHashSet<>();
     private final Set<String> extraFiles = new LinkedHashSet<>();
     private String description = "Description";
@@ -34,13 +37,22 @@ public class CMakeBuilder {
         return this;
     }
 
+    public CMakeBuilder addExternalProjectsWithDependencies(String owner, String repo) {
+        Github github = new Github();
+        var repositoryUrl = github.getRepositoryUrl(owner, repo);
+        String commitSha = github.fetchLatestCommitSHA(owner, repo);
+        var vcpkgObject = github.fetchVcpkgObject(owner, repo, commitSha);
+        vcpkgObjects.add(vcpkgObject);
+        return addExternalProjects(repo, repositoryUrl, commitSha);
+    }
+
     public CMakeBuilder addVcpkgDependency(String dependency) {
         vcpkgDependencies.add(dependency);
         return this;
     }
 
-    public CMakeBuilder addVcpkgDependencies(List<String> dependencies) {
-        vcpkgDependencies.addAll(dependencies);
+    public CMakeBuilder addLinkLibrary(String library) {
+        linkLibraries.add(library);
         return this;
     }
 
@@ -90,14 +102,21 @@ public class CMakeBuilder {
     }
 
     private void saveVcpkgJson() {
-        var vcpkgObject = new VcpkgObject();
-        vcpkgObject.setName(projectDir.getName().toLowerCase());
-        vcpkgObject.setDescription(description);
-        vcpkgDependencies.forEach(vcpkgObject::addDependency);
+        var newVcpkgObject = new VcpkgObject();
+        newVcpkgObject.setName(projectDir.getName().toLowerCase());
+        newVcpkgObject.setDescription(description);
+        vcpkgDependencies.forEach(newVcpkgObject::addDependency);
+
+        Set<String> dependencies = new HashSet<>(vcpkgDependencies);
+        dependencies.addAll(vcpkgObjects.stream()
+                .flatMap(vcpkgObject -> vcpkgObject.getDependencies().stream())
+                .toList());
+        newVcpkgObject.addDependencies(dependencies.stream().toList());
+
         if (testProject) {
-            vcpkgObject.addDependency("gtest");
+            newVcpkgObject.addDependency("gtest");
         }
-        vcpkgObject.saveToFile(new File(projectDir, "vcpkg.json"));
+        newVcpkgObject.saveToFile(new File(projectDir, "vcpkg.json"));
 
         if (testProject) {
             buildTestProject();
@@ -134,6 +153,7 @@ public class CMakeBuilder {
         data.put("description", description);
         data.put("sources", sources);
         data.put("vcpkgDependencies", vcpkgDependencies);
+        data.put("linkLibraries", linkLibraries);
         if (testProject) {
             data.put("testProjectName", getTestProjectName());
         }

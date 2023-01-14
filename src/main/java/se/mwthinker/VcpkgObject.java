@@ -83,6 +83,14 @@ public class VcpkgObject {
         dependencies.add(dependency);
     }
 
+    public void addDependencies(List<String> dependencies) {
+        this.dependencies.addAll(dependencies);
+    }
+
+    public boolean containsDependency(String dependency) {
+        return dependencies.contains(dependency);
+    }
+
     public void saveToFile(File file) {
         try {
             ObjectMapper mapper = new ObjectMapper();
