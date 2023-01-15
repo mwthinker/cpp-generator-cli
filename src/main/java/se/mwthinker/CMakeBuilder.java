@@ -13,6 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+enum LicenseType {
+    MIT
+}
+
 public class CMakeBuilder {
     public record ExternalProject(String name, String gitUrl, String gitTag) {}
 
@@ -26,6 +30,7 @@ public class CMakeBuilder {
     private final Set<String> sources = new LinkedHashSet<>();
     private final Set<String> extraFiles = new LinkedHashSet<>();
     private String description = "Description";
+    private String author = "";
 
     public CMakeBuilder(File projectDir, ResourceHandler resourceHandler) {
         this.projectDir = projectDir;
@@ -76,12 +81,33 @@ public class CMakeBuilder {
         return this;
     }
 
+    public CMakeBuilder withLicense(LicenseType type, String author) {
+        this.author = author;
+        return this;
+    }
+
+    private void saveLicenseFile() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("author", author);
+
+        try (FileWriter writer = new FileWriter(new File(projectDir, "LICENSE"))) {
+            resourceHandler
+                    .getTemplate("LICENSE.ftl")
+                    .process(data, writer);
+        } catch (IOException | TemplateException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void buildFiles() {
         if (sources.isEmpty()) {
             throw new RuntimeException("Must at least have one source file");
         }
 
         saveCMakeListsTxt();
+        if (!author.isEmpty()) {
+            saveLicenseFile();
+        }
 
         if (!externalProjects.isEmpty()) {
             Map<String, Object> data = new HashMap<>();

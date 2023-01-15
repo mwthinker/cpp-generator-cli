@@ -30,6 +30,9 @@ public class GeneratorCli implements Callable<Integer> {
     @Option(names = { "-t", "--test" }, paramLabel = "TEST", description = "add test")
     private boolean test = false;
 
+    @Option(names = { "-l", "--license" }, paramLabel = "LICENSE", description = "add MIT license with author")
+    private String author = "";
+
     public GeneratorCli() {
     }
 
@@ -59,7 +62,8 @@ public class GeneratorCli implements Callable<Integer> {
                 .withDescription(description)
                 .withTestProject(test)
                 .addExtraFile("CMakePresets.json")
-                .addExtraFile("vcpkg.json");
+                .addExtraFile("vcpkg.json")
+                .withLicense(LicenseType.MIT, author);
 
         if (gui) {
             cmakeBuilder
@@ -80,6 +84,8 @@ public class GeneratorCli implements Callable<Integer> {
 
             resourceHandler.copyResourceTo("main.cpp", srcDir);
         }
+        resourceHandler.copyResourceTo(".gitattributes", projectDir);
+        resourceHandler.copyResourceTo(".gitignore", projectDir);
 
         cmakeBuilder.buildFiles();
 
