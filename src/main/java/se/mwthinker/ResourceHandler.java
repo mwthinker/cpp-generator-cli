@@ -29,17 +29,6 @@ public class ResourceHandler {
         }
     }
 
-    public String resourceAsString(String resource) {
-        try (var inputStream = getSystemResourceInputStream(resource)) {
-            if (inputStream == null) {
-                throw new RuntimeException();
-            }
-            return new String(inputStream.readAllBytes());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public void copyResourceTo(String resource, File destDir) {
         try {
             var inputStream = getSystemResourceInputStream(resource);
