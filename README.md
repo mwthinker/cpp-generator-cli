@@ -25,3 +25,6 @@ cppgen.exe --new NewProject -o
 ```
 
 A Visual Studio C++ 2022 solution should be opened and ready to be used. Asumes that vcpkg is installed and enviroment variable VCPKG_ROOT pointing to it. Visual Studio 2022 and CMake 3.24 must also be installed and availabe in the PATH enviroment variable.
+
+## License
+MIT
