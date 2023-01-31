@@ -123,8 +123,26 @@ public class CMakeBuilder {
         }
 
         saveVcpkgJson();
+        saveGithubAction();
 
         resourceHandler.copyResourceTo("CMakePresets.json", projectDir);
+    }
+
+    private void saveGithubAction() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("projectName", projectDir.getName());
+        data.put("hasTests", testProject);
+
+        File github = Util.createFolder(projectDir, ".github");
+        File workflowsDir = Util.createFolder(github, "workflows");
+
+        try (FileWriter writer = new FileWriter(new File(workflowsDir, "ci.yml"))) {
+            resourceHandler
+                    .getTemplate("ci.ftl")
+                    .process(data, writer);
+        } catch (IOException | TemplateException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void saveVcpkgJson() {
