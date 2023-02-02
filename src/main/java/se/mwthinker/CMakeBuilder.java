@@ -87,16 +87,7 @@ public class CMakeBuilder {
     }
 
     private void saveLicenseFile() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("author", author);
-
-        try (FileWriter writer = new FileWriter(new File(projectDir, "LICENSE"))) {
-            resourceHandler
-                    .getTemplate("LICENSE.ftl")
-                    .process(data, writer);
-        } catch (IOException | TemplateException e) {
-            e.printStackTrace();
-        }
+        saveFileFromTemplate(Map.of("author", author), "LICENSE.ftl", new File(projectDir, "LICENSE"));
     }
 
     public void buildFiles() {
@@ -110,16 +101,9 @@ public class CMakeBuilder {
         }
 
         if (!externalProjects.isEmpty()) {
-            Map<String, Object> data = new HashMap<>();
-            data.put("externalProjects", externalProjects);
-
-            try (FileWriter writer = new FileWriter(new File(projectDir, "ExternalFetchContent.cmake"))) {
-                resourceHandler
-                        .getTemplate("ExternalFetchContent.ftl")
-                        .process(data, writer);
-            } catch (IOException | TemplateException e) {
-                throw new RuntimeException(e);
-            }
+            saveFileFromTemplate(Map.of("externalProjects", externalProjects),
+                    "ExternalProjects.ftl",
+                    new File(projectDir, "ExternalProjects.cmake"));
         }
 
         saveVcpkgJson();
@@ -136,13 +120,7 @@ public class CMakeBuilder {
         File github = Util.createFolder(projectDir, ".github");
         File workflowsDir = Util.createFolder(github, "workflows");
 
-        try (FileWriter writer = new FileWriter(new File(workflowsDir, "ci.yml"))) {
-            resourceHandler
-                    .getTemplate("ci.ftl")
-                    .process(data, writer);
-        } catch (IOException | TemplateException e) {
-            throw new RuntimeException(e);
-        }
+        saveFileFromTemplate(data, "ci.ftl", new File(workflowsDir, "ci.yml"));
     }
 
     private void saveVcpkgJson() {
@@ -180,14 +158,7 @@ public class CMakeBuilder {
         data.put("projectName", getTestProjectName());
         data.put("extraFiles", List.of("CMakeLists.txt"));
 
-        try (FileWriter writer = new FileWriter(new File(testProjectDir, "CMakeLists.txt"))){
-            resourceHandler
-                    .getTemplate("Test_CMakeLists.ftl")
-                    .process(data, writer);
-        } catch (IOException | TemplateException e) {
-            throw new RuntimeException(e);
-        }
-
+        saveFileFromTemplate(data, "Test_CMakeLists.ftl", new File(testProjectDir, "CMakeLists.txt"));
         return this;
     }
 
@@ -206,9 +177,13 @@ public class CMakeBuilder {
         }
         data.put("extraFiles", extraFiles);
 
-        try (FileWriter writer = new FileWriter(new File(projectDir, "CMakeLists.txt"))){
+        saveFileFromTemplate(data, "CMakeLists.ftl", new File(projectDir, "CMakeLists.txt"));
+    }
+
+    private void saveFileFromTemplate(Map<String, Object> data, String templateName, File saveToFile) {
+        try (FileWriter writer = new FileWriter(saveToFile)) {
             resourceHandler
-                    .getTemplate("CMakeLists.ftl")
+                    .getTemplate(templateName)
                     .process(data, writer);
         } catch (IOException | TemplateException e) {
             throw new RuntimeException(e);
