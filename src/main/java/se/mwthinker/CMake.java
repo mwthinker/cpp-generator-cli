@@ -8,10 +8,10 @@ import java.io.File;
 import java.io.IOException;
 
 abstract class CMake {
-    static private boolean verbose = false;
+    static private boolean VERBOSE = false;
 
     public static void setVerbose(boolean verbose) {
-        CMake.verbose = verbose;
+        CMake.VERBOSE = verbose;
     }
 
     public static void generate(File projectDir, File buildDir) {
@@ -35,7 +35,7 @@ abstract class CMake {
         executor.setWorkingDirectory(buildDir);
 
         String openVisualStudioSolution = "cmd /C start devenv \"" + projectDir.getName() + ".sln\"";
-        if (verbose) {
+        if (VERBOSE) {
             System.out.println(openVisualStudioSolution);
         }
         try {

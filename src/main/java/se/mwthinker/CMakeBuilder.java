@@ -102,8 +102,8 @@ public class CMakeBuilder {
 
         if (!externalProjects.isEmpty()) {
             saveFileFromTemplate(Map.of("externalProjects", externalProjects),
-                    "ExternalProjects.ftl",
-                    new File(projectDir, "ExternalProjects.cmake"));
+                    "ExternalFetchContent.ftl",
+                    new File(projectDir, "ExternalFetchContent.cmake"));
         }
 
         saveVcpkgJson();
