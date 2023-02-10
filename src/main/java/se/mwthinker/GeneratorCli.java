@@ -41,6 +41,14 @@ public class GeneratorCli implements Callable<Integer> {
         System.exit(exitCode);
     }
 
+    private ResourceHandler createResourceHandler() {
+        if (gui) {
+            return new ResourceHandler("gui-template");
+        }
+
+        return new ResourceHandler("empty-template");
+    }
+
     @Override
     public Integer call() {
         if (projectDir.exists() || !projectDir.mkdir()) {
@@ -48,21 +56,9 @@ public class GeneratorCli implements Callable<Integer> {
             return 1;
         }
 
-        var srcDir = Util.createFolder(projectDir, "src");
-        Util.createFolder(projectDir, "data");
-
-        ResourceHandler resourceHandler;
-        if (gui) {
-            resourceHandler = new ResourceHandler("gui-template");
-        } else {
-            resourceHandler = new ResourceHandler("empty-template");
-        }
-
-        CMakeBuilder cmakeBuilder = new CMakeBuilder(projectDir, resourceHandler)
+        CMakeBuilder cmakeBuilder = new CMakeBuilder(projectDir, createResourceHandler())
                 .withDescription(description)
                 .withTestProject(test)
-                .addExtraFile("CMakePresets.json")
-                .addExtraFile("vcpkg.json")
                 .withLicense(LicenseType.MIT, author);
 
         if (gui) {
@@ -70,23 +66,13 @@ public class GeneratorCli implements Callable<Integer> {
                     .addExternalProjectsWithDependencies("mwthinker","CppSdl2")
                     .addSource("src/main.cpp")
                     .addSource("src/testwindow.cpp")
-                    .addSource("src/testwindow.h")
-                    .addExtraFile("ExternalFetchContent.cmake");
-
-            resourceHandler.copyResourceTo("main.cpp", srcDir);
-            resourceHandler.copyResourceTo("testwindow.cpp", srcDir);
-            resourceHandler.copyResourceTo("testwindow.h", srcDir);
+                    .addSource("src/testwindow.h");
         } else {
             cmakeBuilder
                     .addSource("src/main.cpp")
                     .addVcpkgDependency("fmt")
                     .addLinkLibrary("fmt::fmt");
-
-            resourceHandler.copyResourceTo("main.cpp", srcDir);
         }
-        resourceHandler.copyResourceTo(".gitattributes", projectDir);
-        resourceHandler.copyResourceTo(".gitignore", projectDir);
-
         cmakeBuilder.buildFiles();
 
         if (cmake || open) {

@@ -95,21 +95,33 @@ public class CMakeBuilder {
             throw new RuntimeException("Must at least have one source file");
         }
 
-        saveCMakeListsTxt();
-        if (!author.isEmpty()) {
-            saveLicenseFile();
+        for (var source : sources) {
+            File file = new File(projectDir, source);
+            file.getParentFile().mkdirs();
+            resourceHandler.copyResourceTo(file.getName(), file.getParentFile());
         }
+
+        addExtraFile("CMakePresets.json");
+        resourceHandler.copyResourceTo("CMakePresets.json", projectDir);
+        addExtraFile("vcpkg.json");
+        saveVcpkgJson();
+
+        resourceHandler.copyResourceTo(".gitattributes", projectDir);
+        resourceHandler.copyResourceTo(".gitignore", projectDir);
 
         if (!externalProjects.isEmpty()) {
             saveFileFromTemplate(Map.of("externalProjects", externalProjects),
                     "ExternalFetchContent.ftl",
                     new File(projectDir, "ExternalFetchContent.cmake"));
+            addExtraFile("ExternalFetchContent.cmake");
         }
 
-        saveVcpkgJson();
-        saveGithubAction();
+        saveCMakeListsTxt();
+        if (!author.isEmpty()) {
+            saveLicenseFile();
+        }
 
-        resourceHandler.copyResourceTo("CMakePresets.json", projectDir);
+        saveGithubAction();
     }
 
     private void saveGithubAction() {
