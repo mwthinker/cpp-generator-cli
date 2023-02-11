@@ -56,7 +56,9 @@ public class GeneratorCli implements Callable<Integer> {
             return 1;
         }
 
-        CMakeBuilder cmakeBuilder = new CMakeBuilder(projectDir, createResourceHandler())
+        FileSystem fileSystem = new FileSystem(createResourceHandler());
+
+        CMakeBuilder cmakeBuilder = new CMakeBuilder(projectDir, fileSystem, new Github())
                 .withDescription(description)
                 .withTestProject(test)
                 .withLicense(LicenseType.MIT, author);
@@ -76,7 +78,7 @@ public class GeneratorCli implements Callable<Integer> {
         cmakeBuilder.buildFiles();
 
         if (cmake || open) {
-            File buildDir = Util.createFolder(projectDir, "build");
+            File buildDir = fileSystem.createFolder(projectDir, "build");
             CMake.setVerbose(verbose);
             CMake.generate(projectDir, buildDir);
             if (open) {
