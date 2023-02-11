@@ -17,7 +17,6 @@ public class CMakeBuilder {
     public record ExternalProject(String name, String gitUrl, String gitTag) {}
 
     private boolean testProject;
-    private final File projectDir;
     private final FileSystem fileSystem;
     private final Github github;
     private final List<ExternalProject> externalProjects = new ArrayList<>();
@@ -29,8 +28,7 @@ public class CMakeBuilder {
     private String description = "Description";
     private String author = "";
 
-    public CMakeBuilder(File projectDir, FileSystem fileSystem, Github github) {
-        this.projectDir = projectDir;
+    public CMakeBuilder(FileSystem fileSystem, Github github) {
         this.fileSystem = fileSystem;
         this.github = github;
     }
@@ -89,22 +87,22 @@ public class CMakeBuilder {
         }
 
         for (var source : sources) {
-            File file = fileSystem.createFile(projectDir, source);
+            File file = fileSystem.createFile(source);
             fileSystem.copyResourceTo(file.getName(), file.getParentFile());
         }
 
         addExtraFile("CMakePresets.json");
-        fileSystem.copyResourceTo("CMakePresets.json", projectDir);
+        fileSystem.copyResourceTo("CMakePresets.json");
         addExtraFile("vcpkg.json");
         saveVcpkgJson();
 
-        fileSystem.copyResourceTo(".gitattributes", projectDir);
-        fileSystem.copyResourceTo(".gitignore", projectDir);
+        fileSystem.copyResourceTo(".gitattributes");
+        fileSystem.copyResourceTo(".gitignore");
 
         if (!externalProjects.isEmpty()) {
             fileSystem.saveFileFromTemplate(Map.of("externalProjects", externalProjects),
                     "ExternalFetchContent.ftl",
-                    fileSystem.createFile(projectDir, "ExternalFetchContent.cmake"));
+                    fileSystem.createFile("ExternalFetchContent.cmake"));
             addExtraFile("ExternalFetchContent.cmake");
         }
 
@@ -117,22 +115,22 @@ public class CMakeBuilder {
     }
 
     private void saveLicenseFile() {
-        fileSystem.saveFileFromTemplate(Map.of("author", author), "LICENSE.ftl", fileSystem.createFile(projectDir, "LICENSE"));
+        fileSystem.saveFileFromTemplate(Map.of("author", author), "LICENSE.ftl", fileSystem.createFile( "LICENSE"));
     }
 
     private void saveGithubAction() {
         Map<String, Object> data = new HashMap<>();
-        data.put("projectName", projectDir.getName());
+        data.put("projectName", fileSystem.getProjectName());
         data.put("hasTests", testProject);
 
-        File workflowsDir = fileSystem.createFolder(projectDir, ".github/workflows");
+        File workflowsDir = fileSystem.createFolder(".github/workflows");
 
         fileSystem.saveFileFromTemplate(data, "ci.ftl", fileSystem.createFile(workflowsDir, "ci.yml"));
     }
 
     private void saveVcpkgJson() {
         var newVcpkgObject = new VcpkgObject();
-        newVcpkgObject.setName(projectDir.getName().toLowerCase());
+        newVcpkgObject.setName(fileSystem.getProjectName().toLowerCase());
         newVcpkgObject.setDescription(description);
         vcpkgDependencies.forEach(newVcpkgObject::addDependency);
 
@@ -145,7 +143,7 @@ public class CMakeBuilder {
         if (testProject) {
             newVcpkgObject.addDependency("gtest");
         }
-        newVcpkgObject.saveToFile(fileSystem.createFile(projectDir, "vcpkg.json"));
+        newVcpkgObject.saveToFile(fileSystem.createFile("vcpkg.json"));
 
         if (testProject) {
             buildTestProject();
@@ -153,11 +151,11 @@ public class CMakeBuilder {
     }
 
     private String getTestProjectName() {
-        return projectDir.getName() + "_Test";
+        return fileSystem.getProjectName() + "_Test";
     }
 
-    private CMakeBuilder buildTestProject() {
-        File testProjectDir = fileSystem.createFolder(projectDir, getTestProjectName());
+    private void buildTestProject() {
+        File testProjectDir = fileSystem.createFolder(getTestProjectName());
         File sourceDir = fileSystem.createFolder(testProjectDir, "src");
         fileSystem.copyResourceTo("tests.cpp", sourceDir);
 
@@ -166,12 +164,11 @@ public class CMakeBuilder {
         data.put("extraFiles", List.of("CMakeLists.txt"));
 
         fileSystem.saveFileFromTemplate(data, "Test_CMakeLists.ftl", fileSystem.createFile(testProjectDir, "CMakeLists.txt"));
-        return this;
     }
 
     private void saveCMakeListsTxt() {
         Map<String, Object> data = new HashMap<>();
-        data.put("projectName", projectDir.getName());
+        data.put("projectName", fileSystem.getProjectName());
         data.put("description", description);
         data.put("sources", sources);
         data.put("vcpkgDependencies", vcpkgDependencies);
@@ -184,7 +181,7 @@ public class CMakeBuilder {
         }
         data.put("extraFiles", extraFiles);
 
-        fileSystem.saveFileFromTemplate(data, "CMakeLists.ftl", fileSystem.createFile(projectDir, "CMakeLists.txt"));
+        fileSystem.saveFileFromTemplate(data, "CMakeLists.ftl", fileSystem.createFile("CMakeLists.txt"));
     }
 
 }

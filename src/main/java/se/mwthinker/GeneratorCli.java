@@ -55,10 +55,14 @@ public class GeneratorCli implements Callable<Integer> {
             System.out.println("Failed to create project folder");
             return 1;
         }
+        if (!new File(projectDir, "data").mkdir()) {
+            System.out.println("Failed to create data folder");
+            return 1;
+        }
 
-        FileSystem fileSystem = new FileSystem(createResourceHandler());
+        FileSystem fileSystem = new FileSystem(projectDir, createResourceHandler());
 
-        CMakeBuilder cmakeBuilder = new CMakeBuilder(projectDir, fileSystem, new Github())
+        CMakeBuilder cmakeBuilder = new CMakeBuilder(fileSystem, new Github())
                 .withDescription(description)
                 .withTestProject(test)
                 .withLicense(LicenseType.MIT, author);
