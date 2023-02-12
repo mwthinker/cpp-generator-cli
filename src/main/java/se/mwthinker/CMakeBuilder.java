@@ -14,11 +14,13 @@ enum LicenseType {
 }
 
 public class CMakeBuilder {
+
     public record ExternalProject(String name, String gitUrl, String gitTag) {}
 
     private boolean testProject;
     private final FileSystem fileSystem;
     private final Github github;
+    private final VcpkgObjectFactory vcpkgObjectFactory;
     private final List<ExternalProject> externalProjects = new ArrayList<>();
     private final List<VcpkgObject> vcpkgObjects = new ArrayList<>();
     private final Set<String> vcpkgDependencies = new LinkedHashSet<>(); // Want to element keep order (to make it easier for a human to read).
@@ -28,7 +30,8 @@ public class CMakeBuilder {
     private String description = "Description";
     private String author = "";
 
-    public CMakeBuilder(FileSystem fileSystem, Github github) {
+    public CMakeBuilder(FileSystem fileSystem, Github github, VcpkgObjectFactory vcpkgObjectFactory) {
+        this.vcpkgObjectFactory = vcpkgObjectFactory;
         this.fileSystem = fileSystem;
         this.github = github;
     }
@@ -129,9 +132,7 @@ public class CMakeBuilder {
     }
 
     private void saveVcpkgJson() {
-        var newVcpkgObject = new VcpkgObject();
-        newVcpkgObject.setName(fileSystem.getProjectName().toLowerCase());
-        newVcpkgObject.setDescription(description);
+        var newVcpkgObject = vcpkgObjectFactory.createVcpkgObject(fileSystem.getProjectName().toLowerCase(), description);
         vcpkgDependencies.forEach(newVcpkgObject::addDependency);
 
         Set<String> dependencies = new HashSet<>(vcpkgDependencies);
