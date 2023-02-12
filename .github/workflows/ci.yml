@@ -42,6 +42,7 @@ jobs:
       - name: Run binary file Windows
         shell: bash
         run: |
+          ls
           cd target
           ./cppgen.exe --new CppProject --test --cmake
         if: runner.os == 'Windows'
