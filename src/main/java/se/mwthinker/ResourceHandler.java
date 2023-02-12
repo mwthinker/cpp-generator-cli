@@ -32,7 +32,6 @@ public class ResourceHandler {
     public void copyResourceTo(String resource, File destDir) {
         try {
             var inputStream = getSystemResourceInputStream(resource);
-            System.err.println("Copying " + resource + " to " + destDir + "  " + inputStream);
             Files.copy(inputStream, new File(destDir, resource).toPath());
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -43,6 +42,9 @@ public class ResourceHandler {
        var stream = getClass().getClassLoader().getResourceAsStream(templateDir + "/" + resource);
        if (stream == null) {
            stream = getClass().getClassLoader().getResourceAsStream(resource);
+       }
+       if (stream == null) {
+           throw new RuntimeException("Could not find resource " + resource);
        }
        return stream;
     }
