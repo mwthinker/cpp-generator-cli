@@ -99,8 +99,8 @@ public class CMakeBuilder {
         addExtraFile("vcpkg.json");
         saveVcpkgJson();
 
-        fileSystem.copyResourceTo(".gitattributes");
-        fileSystem.copyResourceTo(".gitignore");
+        fileSystem.copyResourceTo("gitattributes",".gitattributes");
+        fileSystem.copyResourceTo("gitignore", ".gitignore");
 
         if (!externalProjects.isEmpty()) {
             fileSystem.saveFileFromTemplate(Map.of("externalProjects", externalProjects),

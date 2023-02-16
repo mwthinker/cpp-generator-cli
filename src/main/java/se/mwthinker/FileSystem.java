@@ -40,8 +40,12 @@ class FileSystem {
         return createFile(projectDir, file);
     }
 
-    public void copyResourceTo(String resource, File destDir) {
-        resourceHandler.copyResourceTo(resource, destDir);
+    public void copyResourceTo(String resource, File dest) {
+        resourceHandler.copyResourceTo(resource, dest);
+    }
+
+    public void copyResourceTo(String resource, String destName) {
+        resourceHandler.copyResourceTo(resource, new File(projectDir, destName));
     }
 
     public void copyResourceTo(String resource) {

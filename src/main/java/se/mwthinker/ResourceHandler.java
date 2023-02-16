@@ -29,10 +29,12 @@ public class ResourceHandler {
         }
     }
 
-    public void copyResourceTo(String resource, File destDir) {
+    public void copyResourceTo(String resource, File dest) {
+        File file = dest.isDirectory() ? new File(dest, resource) : dest;
+
         try {
             var inputStream = getSystemResourceInputStream(resource);
-            Files.copy(inputStream, new File(destDir, resource).toPath());
+            Files.copy(inputStream, file.toPath());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -44,7 +46,7 @@ public class ResourceHandler {
            stream = getClass().getClassLoader().getResourceAsStream(resource);
        }
        if (stream == null) {
-           throw new RuntimeException("Could not find resource " + resource);
+           throw new RuntimeException("Could not find resource " + resource + " in " + templateDir + "");
        }
        return stream;
     }
