@@ -88,10 +88,7 @@ public class CMakeBuilder {
         }
 
         for (var source : sources) {
-            String[] list = source.split("/");
-            String file = list[list.length - 1];
-
-            fileSystem.copyResourceTo(file, source);
+            fileSystem.copyResourceTo(source);
         }
 
         addExtraFile("CMakePresets.json");
@@ -103,9 +100,7 @@ public class CMakeBuilder {
         fileSystem.copyResourceTo("gitignore", ".gitignore");
 
         if (!externalProjects.isEmpty()) {
-            fileSystem.saveFileFromTemplate(Map.of("externalProjects", externalProjects),
-                    "ExternalFetchContent.ftl",
-                    "ExternalFetchContent.cmake");
+            fileSystem.saveFileFromTemplate(Map.of("externalProjects", externalProjects), "ExternalFetchContent.ftl");
             addExtraFile("ExternalFetchContent.cmake");
         }
 
@@ -118,7 +113,7 @@ public class CMakeBuilder {
     }
 
     private void saveLicenseFile() {
-        fileSystem.saveFileFromTemplate(Map.of("author", author), "LICENSE.ftl", "LICENSE");
+        fileSystem.saveFileFromTemplate(Map.of("author", author), "LICENSE");
     }
 
     private void saveGithubAction() {
@@ -126,7 +121,7 @@ public class CMakeBuilder {
         data.put("projectName", fileSystem.getProjectName());
         data.put("hasTests", testProject);
 
-        fileSystem.saveFileFromTemplate(data, "ci.ftl", ".github/workflows/ci.yml");
+        fileSystem.saveFileFromTemplate(data, ".github/workflows/ci.yml");
     }
 
     private void saveVcpkgJson() {
@@ -157,13 +152,13 @@ public class CMakeBuilder {
     }
 
     private void buildTestProject() {
-        fileSystem.copyResourceTo("tests.cpp", pathOf(getTestProjectName(), "src", "tests.cpp"));
+        fileSystem.copyResourceTo(pathOf(getTestProjectName(), "src", "tests.cpp"));
 
         Map<String, Object> data = new HashMap<>();
         data.put("projectName", getTestProjectName());
         data.put("extraFiles", List.of("CMakeLists.txt"));
 
-        fileSystem.saveFileFromTemplate(data, "Test_CMakeLists.ftl", pathOf(getTestProjectName(), "/CMakeLists.txt"));
+        fileSystem.saveFileFromTemplate(data, "Test_CMakeLists.ftl", pathOf(getTestProjectName(), "CMakeLists.txt"));
     }
 
     private void saveCMakeListsTxt() {
@@ -181,7 +176,7 @@ public class CMakeBuilder {
         }
         data.put("extraFiles", extraFiles);
 
-        fileSystem.saveFileFromTemplate(data, "CMakeLists.ftl", "CMakeLists.txt");
+        fileSystem.saveFileFromTemplate(data, "CMakeLists.txt");
     }
 
     public static String pathOf(String... paths) {

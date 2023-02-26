@@ -62,15 +62,15 @@ public class CMakeBuilderTest {
         // Then
         verify(fileSystem).copyResourceTo("gitattributes", ".gitattributes");
         verify(fileSystem).copyResourceTo("gitignore", ".gitignore");
-        verify(fileSystem).saveFileFromTemplate(any(), eq("CMakeLists.ftl"), eq("CMakeLists.txt"));
+        verify(fileSystem).saveFileFromTemplate(any(), eq("CMakeLists.txt"));
         verify(fileSystem).copyResourceTo("CMakePresets.json");
         verify(fileSystem).saveToFile(any(), eq("vcpkg.json"));
-        verify(fileSystem).saveFileFromTemplate(any(), eq("ci.ftl"), eq(".github/workflows/ci.yml"));
-        verify(fileSystem).copyResourceTo("main.cpp", "src/main.cpp");
+        verify(fileSystem).saveFileFromTemplate(any(), eq(".github/workflows/ci.yml"));
+        verify(fileSystem).copyResourceTo("src/main.cpp");
 
-        verify(fileSystem, times(3)).copyResourceTo(any(), any());
-        verify(fileSystem, times(1)).copyResourceTo(any());
-        verify(fileSystem, times(2)).saveFileFromTemplate(any(), any(), any());
+        verify(fileSystem, times(2)).copyResourceTo(any(), any());
+        verify(fileSystem, times(2)).copyResourceTo(any());
+        verify(fileSystem, times(2)).saveFileFromTemplate(any(), any());
         verify(fileSystem, times(1)).saveToFile(any(), any());
     }
 
@@ -86,8 +86,8 @@ public class CMakeBuilderTest {
                 .buildFiles();
 
         // Then
-        verify(fileSystem).copyResourceTo("tests.cpp", "MyProject_Test/src/tests.cpp");
-        verify(fileSystem).saveFileFromTemplate(any(), any(), eq("CMakeLists.txt"));
+        verify(fileSystem).copyResourceTo("MyProject_Test/src/tests.cpp");
+        verify(fileSystem).saveFileFromTemplate(any(), eq("Test_CMakeLists.ftl"), eq("MyProject_Test/CMakeLists.txt"));
     }
 
 }
