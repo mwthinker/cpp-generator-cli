@@ -90,4 +90,19 @@ public class CMakeBuilderTest {
         verify(fileSystem).saveFileFromTemplate(any(), eq("Test_CMakeLists.ftl"), eq("MyProject_Test/CMakeLists.txt"));
     }
 
+    @Test
+    public void buildWithLicenseFile() {
+        // Given
+        when(fileSystem.getProjectName()).thenReturn("MyProject");
+
+        // When
+        cmakeBuilder
+                .addSource("src/main.cpp")
+                .withLicense(LicenseType.MIT, "SOME_NAME")
+                .buildFiles();
+
+        // Then
+        verify(fileSystem).saveFileFromTemplate(any(), eq("LICENSE"));
+    }
+
 }
