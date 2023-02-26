@@ -33,12 +33,28 @@ public class GeneratorCli implements Callable<Integer> {
     @Option(names = { "-l", "--license" }, paramLabel = "LICENSE", description = "add MIT license with author")
     private String author = "";
 
+    @Option(names = { "-h", "--help" }, usageHelp = true, description = "display a help message")
+    private boolean helpRequested = false;
+
+    @Option(names = {"-v", "--version"}, versionHelp = true, description = "display version info")
+    boolean versionInfoRequested;
+
     public GeneratorCli() {
     }
 
     public static void main(String[] args) {
-        int exitCode = new CommandLine(new GeneratorCli()).execute(args);
-        System.exit(exitCode);
+        var commandLine = new CommandLine(new GeneratorCli());
+        commandLine.parseArgs(args);
+        if (commandLine.isUsageHelpRequested()) {
+            System.out.println("Script to generate a CMake C++ project\n");
+
+            commandLine.usage(System.out);
+        } else if (commandLine.isVersionHelpRequested()) {
+            commandLine.printVersionHelp(System.out);
+        } else {
+            int exitCode = commandLine.execute(args);
+            System.exit(exitCode);
+        }
     }
 
     private ResourceHandler createResourceHandler() {

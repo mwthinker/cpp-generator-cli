@@ -7,16 +7,21 @@ Generate a C++ project template based on cmake and vcpkg.
 Usage of the generated binary file:
 ```bash
 cppgen --help
+Script to generate a CMake C++ project
+
+Usage: cppgen [-cghotvV] [-d=DESCRIPTION] [-l=LICENSE] -n=NEW
 C++ generator
-  -c, --cmake         run cmake
+  -c, --cmake             run cmake
   -d, --description=DESCRIPTION
-                      short description used in the template
-  -g, --gui           add gui library
-  -i, --interactive   interactive input
-  -n, --new=NEW       the project name
-  -o, --open          open visual studio solution
-  -t, --test          add test
-  -V, --verbose       show verbose output
+                          short description used in the template
+  -g, --gui               add gui library
+  -h, --help              display a help message
+  -l, --license=LICENSE   add MIT license with author
+  -n, --new=NEW           the project name
+  -o, --open              open visual studio solution
+  -t, --test              add test
+  -v, --version           display version info
+  -V, --verbose           show verbose output
 ```
 
 Example of generating a C++ project and open in Visual Studio C++ 2022:
