@@ -3,13 +3,7 @@ package se.mwthinker;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,19 +81,4 @@ public class VcpkgObject {
         this.dependencies.addAll(dependencies);
     }
 
-    public boolean containsDependency(String dependency) {
-        return dependencies.contains(dependency);
-    }
-
-    public void saveToFile(File file) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            ObjectWriter writer = mapper.writer(
-                    new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter().withLinefeed("\n"))
-            );
-            writer.writeValue(file, this);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

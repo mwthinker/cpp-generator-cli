@@ -1,11 +1,16 @@
 package se.mwthinker;
 
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import freemarker.template.TemplateException;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Map;
+
 
 class FileSystem {
     private final File projectDir;
@@ -20,40 +25,30 @@ class FileSystem {
         return projectDir.getName();
     }
 
-    public File createFolder(File parent, String folder) {
-        var newDir = new File(parent, folder);
-        newDir.mkdirs();
-        return newDir;
-    }
-
-    public File createFolder(String folder) {
-        return createFolder(projectDir, folder);
-    }
-
-    public File createFile(File parent, String file) {
-        var newFile = new File(parent, file);
-        newFile.getParentFile().mkdirs();
-        return newFile;
-    }
-
-    public File createFile(String file) {
-        return createFile(projectDir, file);
-    }
-
-    public void copyResourceTo(String resource, File dest) {
-        resourceHandler.copyResourceTo(resource, dest);
-    }
-
     public void copyResourceTo(String resource, String destName) {
         resourceHandler.copyResourceTo(resource, new File(projectDir, destName));
     }
 
     public void copyResourceTo(String resource) {
-        copyResourceTo(resource, projectDir);
+        copyResourceTo(resource, resource);
     }
 
-    public void saveFileFromTemplate(Map<String, Object> data, String templateName, File saveToFile) {
-        try (FileWriter writer = new FileWriter(saveToFile)) {
+    public void saveToFile(VcpkgObject vcpkgObject, String saveToFile) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectWriter writer = mapper.writer(
+                    new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter().withLinefeed("\n"))
+            );
+            writer.writeValue(new File(projectDir, saveToFile), vcpkgObject);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void saveFileFromTemplate(Map<String, Object> data, String templateName, String saveToFile) {
+        File file = new File(projectDir, saveToFile);
+        file.getParentFile().mkdirs();
+        try (FileWriter writer = new FileWriter(file)) {
             resourceHandler
                     .getTemplate(templateName)
                     .process(data, writer);

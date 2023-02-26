@@ -31,6 +31,7 @@ public class ResourceHandler {
 
     public void copyResourceTo(String resource, File dest) {
         File file = dest.isDirectory() ? new File(dest, resource) : dest;
+        file.getParentFile().mkdirs();
 
         try {
             var inputStream = getSystemResourceInputStream(resource);
