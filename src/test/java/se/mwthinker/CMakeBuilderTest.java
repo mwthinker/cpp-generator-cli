@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -72,6 +73,24 @@ public class CMakeBuilderTest {
         verify(fileSystem, times(2)).copyResourceTo(any());
         verify(fileSystem, times(2)).saveFileFromTemplate(any(), any());
         verify(fileSystem, times(1)).saveToFile(any(), any());
+    }
+
+    @Test
+    public void buildProjectWithDependency() {
+        // Given
+        when(fileSystem.getProjectName()).thenReturn("MyProject");
+
+        // When
+        cmakeBuilder
+                .addSource("src/main.cpp")
+                .addVcpkgDependency("fmt")
+                .buildFiles();
+
+        // Then
+        verify(fileSystem).saveToFile(argThat(argument -> {
+            var dependencies = argument.getDependencies();
+            return dependencies.size() == 1 && dependencies.contains("fmt");
+        }), eq("vcpkg.json"));
     }
 
     @Test

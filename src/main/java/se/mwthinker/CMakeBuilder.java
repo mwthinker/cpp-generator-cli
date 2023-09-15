@@ -3,7 +3,6 @@ package se.mwthinker;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -130,12 +129,6 @@ public class CMakeBuilder {
         newVcpkgObject.setDescription(description);
 
         vcpkgDependencies.forEach(newVcpkgObject::addDependency);
-
-        Set<String> dependencies = new HashSet<>(vcpkgDependencies);
-        dependencies.addAll(vcpkgObjects.stream()
-                .flatMap(vcpkgObject -> vcpkgObject.getDependencies().stream())
-                .toList());
-        newVcpkgObject.addDependencies(dependencies.stream().toList());
 
         if (testProject) {
             newVcpkgObject.addDependency("gtest");

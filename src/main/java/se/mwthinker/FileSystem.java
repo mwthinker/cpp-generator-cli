@@ -11,7 +11,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Map;
 
-
 class FileSystem {
     private final File projectDir;
     private final ResourceHandler resourceHandler;
