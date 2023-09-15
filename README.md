@@ -2,7 +2,7 @@
 A java application based on JDK 19 and maven. Implements a C++ generator CLI.
 
 ## How to use
-Generate a C++ project template based on cmake and vcpkg.
+Generates a C++ project template based on cmake and vcpkg.
 
 Usage of the generated binary file:
 ```bash
@@ -20,8 +20,8 @@ C++ generator
   -n, --new=NEW           the project name
   -o, --open              open visual studio solution
   -t, --test              add test
-  -v, --version           display version info
-  -V, --verbose           show verbose output
+  -V, --version           display version info
+  -v, --verbose           show verbose output
 ```
 
 Example of generating a C++ project and open in Visual Studio C++ 2022:

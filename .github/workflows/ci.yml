@@ -30,21 +30,28 @@ jobs:
 
       - name: Set C++ VCPKG_ROOT
         shell: bash
-        run: echo VCPKG_ROOT="$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"; cat "$GITHUB_ENV"
+        run: echo VCPKG_ROOT="$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"; cat "$GITHUB_ENV";
 
       - name: Run binary file Unix
         shell: bash
         run: |
+          $VCPKG_INSTALLATION_ROOT/vcpkg --version
+          cmake --version
+          ls
           cd target
-          ./cppgen --new CppProject --test --cmake
+          echo ./cppgen --new CppProject --test --cmake -v
+          ./cppgen --new CppProject --test --cmake -v 
         if: runner.os != 'Windows'
 
       - name: Run binary file Windows
         shell: bash
         run: |
+          $VCPKG_INSTALLATION_ROOT/vcpkg.exe --version
+          cmake --version
           ls
           cd target
-          ./cppgen.exe --new CppProject --test --cmake
+          echo ./cppgen.exe --new CppProject --test -v
+          ./cppgen.exe --new CppProject --test -v
         if: runner.os == 'Windows'
 
       - name: Set C++/C compiler on macOS

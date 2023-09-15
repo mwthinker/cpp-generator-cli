@@ -11,13 +11,18 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Map;
 
-class FileSystem {
+public class FileSystem {
     private final File projectDir;
     private final ResourceHandler resourceHandler;
+    private boolean verbose;
 
     public FileSystem(File projectDir, ResourceHandler resourceHandler) {
         this.projectDir = projectDir;
         this.resourceHandler = resourceHandler;
+    }
+
+    void setVerbose(boolean verbose) {
+        this.verbose = verbose;
     }
 
     public String getProjectName() {
@@ -25,6 +30,9 @@ class FileSystem {
     }
 
     public void copyResourceTo(String resource, String destName) {
+        if (verbose) {
+            System.out.println("Use resource " + resource + " to save in file " + destName);
+        }
         resourceHandler.copyResourceTo(resource, new File(projectDir, destName));
     }
 
@@ -44,7 +52,12 @@ class FileSystem {
         }
     }
 
-    public void saveFileFromTemplate(Map<String, Object> data, String templateFileName,String saveToFile) {
+    public void saveFileFromTemplate(Map<String, Object> data, String templateFileName, String saveToFile) {
+        if (verbose) {
+            System.out.println("Use template " + templateFileName + " to save in file " + saveToFile);
+            data.forEach((key, value) -> System.out.println(key + ": " + value));
+        }
+
         File file = new File(projectDir, saveToFile);
         file.getParentFile().mkdirs();
         try (FileWriter writer = new FileWriter(file)) {
