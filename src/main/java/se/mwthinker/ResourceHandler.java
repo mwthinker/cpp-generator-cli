@@ -16,7 +16,7 @@ public class ResourceHandler {
     public ResourceHandler(String templateDir) {
         this.templateDir = templateDir;
 
-        cfg = new Configuration(Configuration.VERSION_2_3_29);
+        cfg = new Configuration(Configuration.VERSION_2_3_32);
         cfg.setDefaultEncoding("UTF-8");
         cfg.setTemplateLoader(new ClassTemplateLoader(ResourceHandler.class, "/templates/"));
     }
@@ -46,7 +46,7 @@ public class ResourceHandler {
            stream = getClass().getClassLoader().getResourceAsStream(resource);
        }
        if (stream == null) {
-           throw new RuntimeException("Could not find resource " + resource + " in " + templateDir + "");
+           throw new RuntimeException("Could not find resource " + resource + " in " + templateDir);
        }
        return stream;
     }

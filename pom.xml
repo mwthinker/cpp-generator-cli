@@ -33,7 +33,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.15.2</version>
+            <version>2.16.0</version>
         </dependency>
 
         <dependency>
@@ -45,13 +45,13 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.13.0</version>
+            <version>3.14.0</version>
         </dependency>
 
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
-            <version>4.11.0</version>
+            <version>4.12.0</version>
         </dependency>
 
         <dependency>
@@ -63,7 +63,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.10.0</version>
+            <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
 
@@ -77,7 +77,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-            <version>5.5.0</version>
+            <version>5.7.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -99,7 +99,7 @@
         </resources>
 
         <plugins>
-            <plugin>
+            <plugin> <!-- To create the application jar and all dependencies -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
@@ -124,13 +124,14 @@
                 </executions>
             </plugin>
 
-            <plugin>
+            <plugin> <!-- To create an executable for Unix -->
                 <groupId>org.skife.maven</groupId>
                 <artifactId>really-executable-jar-maven-plugin</artifactId>
-                <version>2.0.0</version>
+                <version>2.1.1</version>
                 <configuration>
                     <flags>-Xmx1G</flags>
                     <programFile>cppgen</programFile>
+                    <inputFile>${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar</inputFile>
                 </configuration>
 
                 <executions>
@@ -143,10 +144,10 @@
                 </executions>
             </plugin>
 
-            <plugin>
+            <plugin> <!-- To create an .exe file for Windows platform -->
                 <groupId>com.akathist.maven.plugins.launch4j</groupId>
                 <artifactId>launch4j-maven-plugin</artifactId>
-                <version>2.3.2</version>
+                <version>2.4.1</version>
                 <executions>
                     <execution>
                         <id>l4j-clui</id>

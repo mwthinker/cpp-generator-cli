@@ -122,7 +122,7 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
     public String[] getVersion() throws Exception {
         final Properties properties = new Properties();
         properties.load(GeneratorCli.class.getClassLoader().getResourceAsStream("cppgen.properties"));
-        return new String[]{"", "Version info: v" + properties.getProperty("version")};
+        return new String[] {"", "Version info: v" + properties.getProperty("version")};
     }
 
 }

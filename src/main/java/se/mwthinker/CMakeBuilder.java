@@ -172,7 +172,7 @@ public class CMakeBuilder {
         fileSystem.saveFileFromTemplate(data, "CMakeLists.txt");
     }
 
-    public static String pathOf(String... paths) {
+    private static String pathOf(String... paths) {
         if (paths.length == 0) {
             return "";
         }
