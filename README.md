@@ -1,4 +1,4 @@
-# cpp-generator-cli [![CI build](https://github.com/mwthinker/cpp-generator-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/mwthinker/cpp-generator-cli/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+# cpp-generator-cli [![CI build](https://github.com/mwthinker/cpp-generator-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/mwthinker/cpp-generator-cli/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/mwthinker/cpp-generator-cli/graph/badge.svg?token=T6CE5XBPEQ)](https://codecov.io/gh/mwthinker/cpp-generator-cli) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 A java application based on JDK 19 and maven. Implements a C++ generator CLI.
 
 ## How to use
