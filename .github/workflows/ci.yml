@@ -28,6 +28,12 @@ jobs:
         shell: bash
         run: mvn clean install
 
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        if: runner.os == 'Windows'
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Set C++ VCPKG_ROOT
         shell: bash
         run: echo VCPKG_ROOT="$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"; cat "$GITHUB_ENV";
