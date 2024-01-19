@@ -16,8 +16,10 @@ abstract class CMake {
 
     public static void generate(File projectDir, File buildDir) {
         var cmdLine = CommandLine.parse("cmake --preset " + getPreset() + " -B \"" + buildDir.getAbsolutePath() +"\"");
-        DefaultExecutor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(projectDir);
+
+        var executor = new DefaultExecutor.Builder<>()
+                .setWorkingDirectory(projectDir)
+                .get();
 
         try {
             executor.execute(cmdLine);
@@ -31,8 +33,9 @@ abstract class CMake {
             return;
         }
 
-        DefaultExecutor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(buildDir);
+        var executor = new DefaultExecutor.Builder<>()
+                .setWorkingDirectory(buildDir)
+                .get();
 
         String openVisualStudioSolution = "cmd /C start devenv \"" + projectDir.getName() + ".sln\"";
         if (VERBOSE) {

@@ -17,12 +17,12 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>19</maven.compiler.source>
-        <maven.compiler.target>19</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <inceptionYear>2023</inceptionYear>
 
-        <junitJupiterEngineVersion>5.10.1</junitJupiterEngineVersion>
+        <junit.version>5.10.1</junit.version>
     </properties>
 
     <dependencies>
@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-exec</artifactId>
-            <version>1.3</version>
+            <version>1.4.0</version>
         </dependency>
 
         <dependency>
@@ -65,7 +65,7 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junitJupiterEngineVersion}</version>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -79,11 +79,22 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-            <version>5.8.0</version>
+            <version>5.9.0</version>
             <scope>test</scope>
         </dependency>
 
     </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <!-- to remove dependency conflict in com.squareup.okhttp3 (not really a problem, but why not) -->
+                <artifactId>kotlin-stdlib-jdk8</artifactId>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <version>1.9.10</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <resources>
@@ -104,14 +115,18 @@
             <plugin> <!-- In order to run tests when building -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.3</version>
+                <version>3.2.5</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.junit.jupiter</groupId>
                         <artifactId>junit-jupiter-engine</artifactId>
-                        <version>${junitJupiterEngineVersion}</version>
+                        <version>${junit.version}</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                    <!-- Removes warning: "Dynamic loading of agents will be disallowed by default in a future release" -->
+                    <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+                </configuration>
             </plugin>
 
             <plugin> <!-- Generates code coverage report -->
@@ -137,6 +152,7 @@
             <plugin> <!-- To create the application jar and all dependencies -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.6.0</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -182,7 +198,7 @@
             <plugin> <!-- To create an .exe file for Windows platform -->
                 <groupId>com.akathist.maven.plugins.launch4j</groupId>
                 <artifactId>launch4j-maven-plugin</artifactId>
-                <version>2.4.1</version>
+                <version>2.5.0</version>
                 <executions>
                     <execution>
                         <id>l4j-clui</id>
