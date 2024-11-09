@@ -81,6 +81,12 @@
             <artifactId>assertj-core</artifactId>
             <version>3.26.3</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>byte-buddy</artifactId>
+                    <groupId>net.bytebuddy</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -92,10 +98,6 @@
                 <exclusion>
                     <artifactId>junit-jupiter-api</artifactId>
                     <groupId>org.junit.jupiter</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>mockito-core</artifactId>
-                    <groupId>org.mockito</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
