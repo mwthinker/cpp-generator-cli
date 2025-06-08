@@ -17,7 +17,7 @@ public class Github {
     public Github() {
     }
 
-    public String getRepositoryUrl(String owner, String repo) {
+    public static String getRepositoryUrl(String owner, String repo) {
         return "https://github.com/" + owner + "/" + repo + ".git"; // TODO! May not work for every type of repository?
     }
 

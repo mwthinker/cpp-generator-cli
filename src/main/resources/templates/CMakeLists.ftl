@@ -57,12 +57,14 @@ add_subdirectory(${testProjectName})
 find_package(${dependency} CONFIG REQUIRED)
 </#list>
 
+<#if linkExternalLibraries?has_content>
 set_target_properties(
 	${r"${ExternalDependencies}"}
 
 	PROPERTIES FOLDER
 		ExternalDependencies
 )
+</#if>
 
 if (MSVC)
 	target_compile_options(${projectName}
@@ -79,7 +81,6 @@ endif ()
 
 target_link_libraries(${projectName}
 	PRIVATE
-		${r"${ExternalDependencies}"}
 <#list linkLibraries as library>
 		${library}
 </#list>
@@ -87,7 +88,7 @@ target_link_libraries(${projectName}
 
 set_target_properties(${projectName}
 	PROPERTIES
-		CXX_STANDARD 20
+		CXX_STANDARD 23
 		CXX_STANDARD_REQUIRED YES
 		CXX_EXTENSIONS NO
 )

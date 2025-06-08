@@ -33,6 +33,9 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
     @Option(names = { "-g", "--gui" }, paramLabel = "GUI", description = "Add gui library.")
     private boolean gui = false;
 
+    @Option(names = { "-f", "--useFetch" }, paramLabel = "GUI", description = "Use CMake FetchContent (instead .")
+    private boolean fetch = false;
+
     @Option(names = { "-t", "--test" }, paramLabel = "TEST", description = "Add test.")
     private boolean test = false;
 
@@ -93,10 +96,18 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
 
         if (gui) {
             cmakeBuilder
-                    .addExternalProjectsWithDependencies("mwthinker","CppSdl2")
+                    .addLinkLibrary("CppSdl2::CppSdl2")
                     .addSource("src/main.cpp")
                     .addSource("src/testwindow.cpp")
                     .addSource("src/testwindow.h");
+            if (fetch) {
+                cmakeBuilder
+                        .addExternalProjectsWithDependencies("mwthinker","CppSdl2");
+            } else {
+                cmakeBuilder
+                        .addVcpkgDependency("cppsdl2")
+                        .addRegistry("mwthinker", "mw-vcpkg-registry", "cppsdl2");
+            }
         } else {
             cmakeBuilder
                     .addSource("src/main.cpp")

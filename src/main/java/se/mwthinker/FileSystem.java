@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 public class FileSystem {
     private final File projectDir;
@@ -40,13 +41,13 @@ public class FileSystem {
         copyResourceTo(getFileName(resource), resource);
     }
 
-    public void saveToFile(VcpkgObject vcpkgObject, String saveToFile) {
+    public void saveToFile(Object jsonObject, String saveToFile) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             ObjectWriter writer = mapper.writer(
                     new DefaultPrettyPrinter().withObjectIndenter(new DefaultIndenter().withLinefeed("\n"))
             );
-            writer.writeValue(new File(projectDir, saveToFile), vcpkgObject);
+            writer.writeValue(new File(projectDir, saveToFile), jsonObject);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

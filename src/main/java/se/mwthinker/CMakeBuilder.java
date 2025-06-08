@@ -22,11 +22,13 @@ public class CMakeBuilder {
     private final List<ExternalProject> externalProjects = new ArrayList<>();
     private final List<VcpkgObject> vcpkgObjects = new ArrayList<>();
     private final Set<String> vcpkgDependencies = new LinkedHashSet<>(); // Want to element keep order (to make it easier for a human to read).
+    private final Set<String> fetchedVcpkgDependencies = new LinkedHashSet<>();
     private final Set<String> linkLibraries = new LinkedHashSet<>();
     private final Set<String> sources = new LinkedHashSet<>();
     private final Set<String> extraFiles = new LinkedHashSet<>();
     private String description = "Description";
     private String author = "";
+    private final List<VcpkgConfigurationObject.Registry> registries = new ArrayList<>();
 
     public CMakeBuilder(FileSystem fileSystem, Github github) {
         this.fileSystem = fileSystem;
@@ -38,11 +40,25 @@ public class CMakeBuilder {
         return this;
     }
 
+    public CMakeBuilder addRegistry(String owner, String repo, String... packages) {
+        String commitSha = github.fetchLatestCommitSHA(owner, repo);
+        var registry = new VcpkgConfigurationObject.Registry();
+        registry.setKind("git");
+        registry.setBaseline(commitSha);
+        registry.setRepository(Github.getRepositoryUrl(owner, repo));
+        if (packages != null && packages.length > 0) {
+            registry.setPackages(List.of(packages));
+        }
+        registries.add(registry);
+        return this;
+    }
+
     public CMakeBuilder addExternalProjectsWithDependencies(String owner, String repo) {
-        var repositoryUrl = github.getRepositoryUrl(owner, repo);
+        var repositoryUrl = Github.getRepositoryUrl(owner, repo);
         String commitSha = github.fetchLatestCommitSHA(owner, repo);
         var vcpkgObject = github.fetchVcpkgObject(owner, repo, commitSha);
         vcpkgObjects.add(vcpkgObject);
+        fetchedVcpkgDependencies.addAll(vcpkgObject.getDependencies());
         return addExternalProjects(repo, repositoryUrl, commitSha);
     }
 
@@ -94,12 +110,13 @@ public class CMakeBuilder {
         fileSystem.copyResourceTo("CMakePresets.json");
         addExtraFile("vcpkg.json");
         saveVcpkgJson();
+        saveVcpkgConfigurationJson();
 
         fileSystem.copyResourceTo("gitattributes",".gitattributes");
         fileSystem.copyResourceTo("gitignore", ".gitignore");
 
         if (!externalProjects.isEmpty()) {
-            fileSystem.saveFileFromTemplate(Map.of("externalProjects", externalProjects), "ExternalFetchContent.ftl");
+            fileSystem.saveFileFromTemplate(Map.of("externalProjects", externalProjects), "ExternalFetchContent.cmake");
             addExtraFile("ExternalFetchContent.cmake");
         }
 
@@ -123,12 +140,29 @@ public class CMakeBuilder {
         fileSystem.saveFileFromTemplate(data, ".github/workflows/ci.yml");
     }
 
+    private void saveVcpkgConfigurationJson() {
+        var newVcpkgConfiguration = new VcpkgConfigurationObject();
+        var defaultRegistry = new VcpkgConfigurationObject.DefaultRegistry();
+        newVcpkgConfiguration.setDefaultRegistry(defaultRegistry);
+        defaultRegistry.setKind("git");
+        var commitSHA = github.fetchLatestCommitSHA("microsoft", "vcpkg");
+        defaultRegistry.setBaseline(commitSHA);
+        defaultRegistry.setRepository(Github.getRepositoryUrl("microsoft", "vcpkg"));
+
+        if (!registries.isEmpty()) {
+            newVcpkgConfiguration.setRegistries(registries);
+        }
+
+        fileSystem.saveToFile(newVcpkgConfiguration, "vcpkg-configuration.json");
+    }
+
     private void saveVcpkgJson() {
         var newVcpkgObject = new VcpkgObject();
         newVcpkgObject.setName(fileSystem.getProjectName().toLowerCase());
         newVcpkgObject.setDescription(description);
 
         vcpkgDependencies.forEach(newVcpkgObject::addDependency);
+        fetchedVcpkgDependencies.forEach(newVcpkgObject::addDependency);
 
         if (testProject) {
             newVcpkgObject.addDependency("gtest");

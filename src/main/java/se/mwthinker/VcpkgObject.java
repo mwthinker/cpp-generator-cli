@@ -7,14 +7,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.ArrayList;
 import java.util.List;
 
-@JsonPropertyOrder({ "name", "version-string", "port-version", "homepage", "description", "license", "dependencies" })
+@JsonPropertyOrder({ "name", "version", "port-version", "homepage", "description", "license", "dependencies" })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class VcpkgObject {
 
     @JsonProperty("name")
     private String name = "";
 
-    @JsonProperty("version-string")
+    @JsonProperty("version")
     private String version = "0.1.0";
 
     @JsonProperty("homepage")

@@ -65,20 +65,24 @@ public class CMakeBuilderTest {
         verify(fileSystem).copyResourceTo("gitignore", ".gitignore");
         verify(fileSystem).saveFileFromTemplate(any(), eq("CMakeLists.txt"));
         verify(fileSystem).copyResourceTo("CMakePresets.json");
-        verify(fileSystem).saveToFile(any(), eq("vcpkg.json"));
+        verify(fileSystem).saveToFile(any(VcpkgObject.class), eq("vcpkg.json"));
+        verify(fileSystem).saveToFile(any(VcpkgConfigurationObject.class), eq("vcpkg-configuration.json"));
         verify(fileSystem).saveFileFromTemplate(any(), eq(".github/workflows/ci.yml"));
         verify(fileSystem).copyResourceTo("src/main.cpp");
 
         verify(fileSystem, times(2)).copyResourceTo(any(), any());
         verify(fileSystem, times(2)).copyResourceTo(any());
         verify(fileSystem, times(2)).saveFileFromTemplate(any(), any());
-        verify(fileSystem, times(1)).saveToFile(any(), any());
+        verify(fileSystem, times(1)).saveToFile(any(VcpkgObject.class), eq("vcpkg.json"));
+        verify(fileSystem, times(1)).saveToFile(any(VcpkgConfigurationObject.class), eq("vcpkg-configuration.json"));
     }
 
     @Test
     public void buildProjectWithDependency() {
         // Given
         when(fileSystem.getProjectName()).thenReturn("MyProject");
+        when(github.fetchLatestCommitSHA("microsoft", "vcpkg"))
+                .thenReturn("COMMIT_SHA");
 
         // When
         cmakeBuilder
@@ -87,10 +91,24 @@ public class CMakeBuilderTest {
                 .buildFiles();
 
         // Then
+
         verify(fileSystem).saveToFile(argThat(argument -> {
-            var dependencies = argument.getDependencies();
-            return dependencies.size() == 1 && dependencies.contains("fmt");
+            if (argument instanceof VcpkgObject vcpkg) {
+                var dependencies = vcpkg.getDependencies();
+                return dependencies.size() == 1 && dependencies.contains("fmt");
+            }
+            return false;
         }), eq("vcpkg.json"));
+
+        verify(fileSystem).saveToFile(argThat(argument -> {
+            if (argument instanceof VcpkgConfigurationObject vcpkgConfig) {
+                var defaultRegistry = vcpkgConfig.getDefaultRegistry();
+                return defaultRegistry != null && "git".equals(defaultRegistry.getKind())
+                        && "COMMIT_SHA".equals(defaultRegistry.getBaseline())
+                        && "https://github.com/microsoft/vcpkg.git".equals(defaultRegistry.getRepository());
+            }
+            return false;
+        }), eq("vcpkg-configuration.json"));
     }
 
     @Test
