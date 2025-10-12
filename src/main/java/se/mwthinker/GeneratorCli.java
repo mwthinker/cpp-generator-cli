@@ -96,17 +96,17 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
 
         if (gui) {
             cmakeBuilder
-                    .addLinkLibrary("CppSdl2::CppSdl2")
+                    .addLinkLibrary("CppSdl3::CppSdl3")
                     .addSource("src/main.cpp")
                     .addSource("src/testwindow.cpp")
                     .addSource("src/testwindow.h");
             if (fetch) {
                 cmakeBuilder
-                        .addExternalProjectsWithDependencies("mwthinker","CppSdl2");
+                        .addExternalProjectsWithDependencies("mwthinker","CppSdl3");
             } else {
                 cmakeBuilder
-                        .addVcpkgDependency("cppsdl2")
-                        .addRegistry("mwthinker", "mw-vcpkg-registry", "cppsdl2");
+                        .addVcpkgDependency("cppsdl3")
+                        .addRegistry("mwthinker", "mw-vcpkg-registry", "cppsdl3");
             }
         } else {
             cmakeBuilder

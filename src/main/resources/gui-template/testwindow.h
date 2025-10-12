@@ -1,20 +1,16 @@
 #ifndef TESTIMGUIWINDOW_H
 #define TESTIMGUIWINDOW_H
 
-#include <sdl/imguiwindow.h>
+#include <sdl/window.h>
 
-class TestWindow : public sdl::ImGuiWindow {
+class TestWindow : public sdl::Window {
 public:
 	TestWindow();
 
 private:
-	void imGuiPreUpdate(const sdl::DeltaTime& deltaTime) override;
+	void processEvent(const SDL_Event& windowEvent) override;
 
-	void imGuiPostUpdate(const sdl::DeltaTime& deltaTime) override;
-
-	void imGuiEventUpdate(const SDL_Event& windowEvent) override;
-
-	void imGuiUpdate(const sdl::DeltaTime& deltaTime) override;
+	void renderImGui(const sdl::DeltaTime& deltaTime) override;
 };
 
 #endif
