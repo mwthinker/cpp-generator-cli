@@ -1,12 +1,19 @@
 package se.mwthinker;
 
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 import java.io.File;
-import java.util.concurrent.Callable;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Properties;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("SpellCheckingInspection")
 @Command(name = "cppgen",
@@ -15,7 +22,7 @@ import java.util.Properties;
         versionProvider = se.mwthinker.GeneratorCli.class
 )
 public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProvider {
-    @Option(names = { "-n", "--new" }, required = true, paramLabel = "NEW", description = "The project name.")
+    @Parameters(index = "0", paramLabel = "PROJECT_NAME", description = "The project name.", arity = "0..1")
     private File projectDir;
 
     @Option(names = { "-d", "--description" }, paramLabel = "DESCRIPTION", description = "Short description set in CMakeLists.txt.")
@@ -42,10 +49,10 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
     @Option(names = { "-l", "--license" }, paramLabel = "LICENSE", description = "Add MIT license with author.")
     private String author = "";
 
-    public GeneratorCli() {
-    }
+    @Option(names = { "-k", "--keepFiles" }, paramLabel = "KEEPFILES", description = "Keep generated files on error.")
+    private boolean keepFiles = false;
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         var commandLine = new CommandLine(new GeneratorCli());
         try {
             commandLine.parseArgs(args);
@@ -66,18 +73,72 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
         }
     }
 
-    private ResourceHandler createResourceHandler() {
-        if (gui) {
-            return new ResourceHandler("gui-template");
-        }
-
-        return new ResourceHandler("empty-template");
-    }
-
     @Override
     public Integer call() {
+        try {
+            if (projectDir == null) {
+                return runInteractive();
+            } else {
+                return executeGeneratorLogic();
+            }
+        } catch (IOException e) {
+            System.out.println("Error: " + e.getMessage());
+            return 1;
+        }
+    }
+
+    private int runInteractive() throws IOException {
+        try (Terminal terminal = TerminalBuilder.builder().system(true).build()) {
+            LineReader lineReader = LineReaderBuilder.builder().terminal(terminal).build();
+            PrintWriter writer = terminal.writer();
+            askQuestions(lineReader, writer);
+        }
+        return executeGeneratorLogic();
+    }
+
+    private void askQuestions(LineReader lineReader, PrintWriter writer) {
+        String projectName = "";
+        while (projectName.trim().isEmpty()) {
+            projectName = lineReader.readLine("Enter project name: ");
+            if (projectName.trim().isEmpty()) {
+                writer.println("Project name cannot be empty.");
+            }
+        }
+        projectDir = new File(projectName.trim());
+
+        String desc = lineReader.readLine("Enter project description (or press Enter for default 'Description'): ");
+        if (desc != null && !desc.trim().isEmpty()) {
+            description = desc.trim();
+        }
+
+        gui = askYesNoQuestion(lineReader, "Add GUI library? (y/N): ");
+        if (gui) {
+            fetch = askYesNoQuestion(lineReader, "Use CMake FetchContent instead of vcpkg? (y/N): ");
+        }
+
+        test = askYesNoQuestion(lineReader, "Add tests? (y/N): ");
+
+        String authorInput = lineReader.readLine("Enter author name for MIT license (or press Enter to skip): ");
+        if (authorInput != null && !authorInput.trim().isEmpty()) {
+            author = authorInput.trim();
+        }
+
+        cmake = askYesNoQuestion(lineReader, "Run cmake after generation? (y/N): ");
+        if (cmake) {
+            open = askYesNoQuestion(lineReader, "Open Visual Studio solution? (y/N): ");
+        }
+
+        verbose = askYesNoQuestion(lineReader, "Show verbose output? (y/N): ");
+    }
+
+    private boolean askYesNoQuestion(LineReader reader, String prompt) {
+        String input = reader.readLine(prompt);
+        return input.trim().equalsIgnoreCase("y") || input.trim().equalsIgnoreCase("yes");
+    }
+
+    private int executeGeneratorLogic() {
         if (projectDir.exists() || !projectDir.mkdir()) {
-            System.out.println("Failed to create project folder");
+            System.out.println("Failed to create project folder: " + projectDir.getAbsolutePath());
             return 1;
         }
         if (!new File(projectDir, "data").mkdir()) {
@@ -85,7 +146,7 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
             return 1;
         }
 
-        System.out.println("projectDir: " + projectDir.getName());
+        System.out.println("Generating project in: " + projectDir.getName());
         FileSystem fileSystem = new FileSystem(projectDir, createResourceHandler());
         fileSystem.setVerbose(verbose);
 
@@ -102,7 +163,7 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
                     .addSource("src/testwindow.h");
             if (fetch) {
                 cmakeBuilder
-                        .addExternalProjectsWithDependencies("mwthinker","CppSdl3");
+                        .addExternalProjectsWithDependencies("mwthinker", "CppSdl3");
             } else {
                 cmakeBuilder
                         .addVcpkgDependency("cppsdl3")
@@ -114,7 +175,16 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
                     .addVcpkgDependency("fmt")
                     .addLinkLibrary("fmt::fmt");
         }
-        cmakeBuilder.buildFiles();
+        try {
+            cmakeBuilder.buildFiles();
+        } catch (RuntimeException e) {
+            if (!keepFiles) {
+                System.out.println("Cleaning up generated files due to error.");
+                fileSystem.deleteProjectDir();
+            }
+            System.out.println("Error during project generation: " + e.getMessage());
+            return 1;
+        }
 
         if (cmake || open) {
             File buildDir = new File(projectDir, "build");
@@ -126,14 +196,21 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
             }
         }
 
+        System.out.println("Project generation complete.");
         return 0;
     }
 
-    @Override
-    public String[] getVersion() throws Exception {
-        final Properties properties = new Properties();
-        properties.load(GeneratorCli.class.getClassLoader().getResourceAsStream("cppgen.properties"));
-        return new String[] {"", "Version info: v" + properties.getProperty("version")};
+    private ResourceHandler createResourceHandler() {
+        if (gui) {
+            return new ResourceHandler("gui-template");
+        }
+        return new ResourceHandler("empty-template");
     }
 
+    @Override
+    public String[] getVersion() throws IOException {
+        final Properties properties = new Properties();
+        properties.load(GeneratorCli.class.getClassLoader().getResourceAsStream("cppgen.properties"));
+        return new String[]{"", "Version info: v" + properties.getProperty("version")};
+    }
 }

@@ -9,6 +9,9 @@ import freemarker.template.TemplateException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 
@@ -70,6 +73,17 @@ public class FileSystem {
         }
     }
 
+    public void deleteProjectDir() {
+        Path pathToBeDeleted = projectDir.toPath();
+        try (var paths = Files.walk(pathToBeDeleted)) {
+            paths.sorted(Comparator.reverseOrder())
+                    .map(Path::toFile)
+                    .forEach(File::delete);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void saveFileFromTemplate(Map<String, Object> data, String saveToFile) {
         saveFileFromTemplate(data, getTemplateFileName(saveToFile), saveToFile);
     }
@@ -84,7 +98,12 @@ public class FileSystem {
 
     private String getTemplateFileName(String path) {
         String fileName = getFileName(path);
-        return fileName.substring(0, fileName.lastIndexOf('.')) + ".ftl";
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex > 0) {
+            return fileName.substring(0, dotIndex) + ".ftl";
+        } else {
+            return fileName + ".ftl";
+        }
     }
 
 }

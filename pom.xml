@@ -17,13 +17,14 @@
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <inceptionYear>2023</inceptionYear>
 
         <junit.version>6.0.0</junit.version>
         <mockito.version>5.20.0</mockito.version>
+        <jline.version>3.30.6</jline.version>
     </properties>
 
     <dependencies>
@@ -31,6 +32,12 @@
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
             <version>4.7.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jline</groupId>
+            <artifactId>jline</artifactId>
+            <version>${jline.version}</version>
         </dependency>
 
         <dependency>
@@ -235,6 +242,9 @@
                             </classPath>
                             <jre>
                                 <path>${java.home}</path>
+                                <opts>
+                                    <opt>--enable-native-access=ALL-UNNAMED</opt>
+                                </opts>
                             </jre>
                         </configuration>
                     </execution>

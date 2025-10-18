@@ -126,6 +126,7 @@ public class CMakeBuilder {
         }
 
         saveGithubAction();
+        throw new RuntimeException("testar detta");
     }
 
     private void saveLicenseFile() {
