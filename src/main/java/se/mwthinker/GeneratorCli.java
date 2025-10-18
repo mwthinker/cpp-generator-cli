@@ -56,19 +56,24 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
         var commandLine = new CommandLine(new GeneratorCli());
         try {
             commandLine.parseArgs(args);
-        } catch (CommandLine.MissingParameterException e) {
-            System.out.println(e.getMessage());
-            System.exit(1);
+        } catch (CommandLine.ParameterException e) {
+            System.out.println("Argument error: " + e.getMessage());
+            System.exit(2);
         }
-        commandLine.usage(System.out);
+
         if (commandLine.isUsageHelpRequested()) {
+            commandLine.usage(System.out);
             System.exit(0);
         } else if (commandLine.isVersionHelpRequested()) {
+            commandLine.usage(System.out);
             commandLine.printVersionHelp(commandLine.getOut());
             int exitCode = commandLine.getCommandSpec().exitCodeOnVersionHelp();
             System.exit(exitCode);
         } else {
             int exitCode = commandLine.execute(args);
+            if (exitCode == 2) {
+                commandLine.usage(System.out);
+            }
             System.exit(exitCode);
         }
     }
