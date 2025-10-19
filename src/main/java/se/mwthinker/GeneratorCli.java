@@ -40,9 +40,6 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
     @Option(names = { "-g", "--gui" }, paramLabel = "GUI", description = "Add gui library.")
     private boolean gui = false;
 
-    @Option(names = { "-f", "--useFetch" }, paramLabel = "GUI", description = "Use CMake FetchContent (instead .")
-    private boolean fetch = false;
-
     @Option(names = { "-t", "--test" }, paramLabel = "TEST", description = "Add test.")
     private boolean test = false;
 
@@ -117,9 +114,6 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
         }
 
         gui = askYesNoQuestion(lineReader, "Add GUI library? (y/N): ");
-        if (gui) {
-            fetch = askYesNoQuestion(lineReader, "Use CMake FetchContent instead of vcpkg? (y/N): ");
-        }
 
         test = askYesNoQuestion(lineReader, "Add tests? (y/N): ");
 
@@ -165,15 +159,9 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
                     .addLinkLibrary("CppSdl3::CppSdl3")
                     .addSource("src/main.cpp")
                     .addSource("src/testwindow.cpp")
-                    .addSource("src/testwindow.h");
-            if (fetch) {
-                cmakeBuilder
-                        .addExternalProjectsWithDependencies("mwthinker", "CppSdl3");
-            } else {
-                cmakeBuilder
-                        .addVcpkgDependency("cppsdl3")
-                        .addRegistry("mwthinker", "mw-vcpkg-registry", "cppsdl3");
-            }
+                    .addSource("src/testwindow.h")
+                    .addVcpkgDependency("cppsdl3")
+                    .addRegistry("mwthinker", "mw-vcpkg-registry", "cppsdl3");
         } else {
             cmakeBuilder
                     .addSource("src/main.cpp")

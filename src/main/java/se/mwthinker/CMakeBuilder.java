@@ -1,7 +1,6 @@
 package se.mwthinker;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -126,7 +125,7 @@ public class CMakeBuilder {
         }
 
         saveGithubAction();
-        throw new RuntimeException("testar detta");
+        fileSystem.copyResourceTo("./.github/copilot-instructions.md");
     }
 
     private void saveLicenseFile() {
@@ -180,13 +179,13 @@ public class CMakeBuilder {
     }
 
     private void buildTestProject() {
-        fileSystem.copyResourceTo(pathOf(getTestProjectName(), "src", "tests.cpp"));
+        fileSystem.copyResourceTo(String.join("/",getTestProjectName(), "src", "tests.cpp"));
 
         Map<String, Object> data = new HashMap<>();
         data.put("projectName", getTestProjectName());
         data.put("extraFiles", List.of("CMakeLists.txt"));
 
-        fileSystem.saveFileFromTemplate(data, "Test_CMakeLists.ftl", pathOf(getTestProjectName(), "CMakeLists.txt"));
+        fileSystem.saveFileFromTemplate(data, "Test_CMakeLists.ftl", String.join("/", getTestProjectName(), "CMakeLists.txt"));
     }
 
     private void saveCMakeListsTxt() {
@@ -205,17 +204,6 @@ public class CMakeBuilder {
         data.put("extraFiles", extraFiles);
 
         fileSystem.saveFileFromTemplate(data, "CMakeLists.txt");
-    }
-
-    private static String pathOf(String... paths) {
-        if (paths.length == 0) {
-            return "";
-        }
-        StringBuilder builder = new StringBuilder();
-        Arrays.stream(paths)
-                .limit(paths.length - 1)
-                .forEach(path -> builder.append(path).append("/"));
-        return builder.append(paths[paths.length - 1]).toString();
     }
 
 }
