@@ -1,34 +1,28 @@
 package se.mwthinker;
 
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
-import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
+import org.jline.reader.EndOfFileException;
+import org.jline.reader.UserInterruptException;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("SpellCheckingInspection")
 @Command(name = "cppgen",
         mixinStandardHelpOptions = true,
-        description = "C++ generator using CMake",
-        versionProvider = se.mwthinker.GeneratorCli.class
+        description = "C++ generator using CMake"
 )
-public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProvider {
+public class GeneratorCli implements Closeable, Flushable {
     @Parameters(index = "0", paramLabel = "PROJECT_NAME", description = "The project name.", arity = "0..1")
     private File projectDir;
 
     @Option(names = { "-d", "--description" }, paramLabel = "DESCRIPTION", description = "Short description set in CMakeLists.txt.")
     private String description = "Description";
 
-    @Option(names = { "-v", "--verbose" }, paramLabel = "VERBOSE", description = "Show verbose output.")
+    @Option(names = { "-V", "--verbose" }, paramLabel = "VERBOSE", description = "Show verbose output.")
     private boolean verbose = false;
 
     @Option(names = { "-c", "--cmake" }, paramLabel = "OPEN", description = "Run cmake.")
@@ -49,103 +43,94 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
     @Option(names = { "-k", "--keepFiles" }, paramLabel = "KEEPFILES", description = "Keep generated files on error.")
     private boolean keepFiles = false;
 
+    @Option(names = { "-v", "--version" }, versionHelp = true, description = "Display version info.")
+    private boolean versionRequested = false;
+
+    private final ConsoleIO consoleIO;
+
     static void main(String[] args) {
-        var commandLine = new CommandLine(new GeneratorCli());
+        try (GeneratorCli generatorCli = new GeneratorCli()) {
+            generatorCli.run(args);
+        } catch (UserInterruptException | EndOfFileException _) {
+            System.exit(1);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public GeneratorCli() throws IOException {
+        consoleIO = new ConsoleIO();
+    }
+
+    public void run(String[] args) {
+        var commandLine = new CommandLine(this);
         try {
             commandLine.parseArgs(args);
         } catch (CommandLine.ParameterException e) {
-            System.out.println("Argument error: " + e.getMessage());
+            consoleIO.printError("Argument error: " + e.getMessage());
             System.exit(2);
         }
 
         if (commandLine.isUsageHelpRequested()) {
             commandLine.usage(System.out);
             System.exit(0);
-        } else if (commandLine.isVersionHelpRequested()) {
+        } else if (versionRequested) {
+            printVersion();
+            System.exit(0);
+        }
+
+        if (projectDir == null) {
+            interactivePrompt(consoleIO);
+        }
+        int exitCode = executeGeneratorLogic();
+        if (exitCode == 2) {
             commandLine.usage(System.out);
-            commandLine.printVersionHelp(commandLine.getOut());
-            int exitCode = commandLine.getCommandSpec().exitCodeOnVersionHelp();
-            System.exit(exitCode);
-        } else {
-            int exitCode = commandLine.execute(args);
-            if (exitCode == 2) {
-                commandLine.usage(System.out);
-            }
-            System.exit(exitCode);
         }
+        System.exit(exitCode);
     }
 
-    @Override
-    public Integer call() {
-        try {
-            if (projectDir == null) {
-                return runInteractive();
-            } else {
-                return executeGeneratorLogic();
-            }
-        } catch (IOException e) {
-            System.out.println("Error: " + e.getMessage());
-            return 1;
-        }
-    }
-
-    private int runInteractive() throws IOException {
-        try (Terminal terminal = TerminalBuilder.builder().system(true).build()) {
-            LineReader lineReader = LineReaderBuilder.builder().terminal(terminal).build();
-            PrintWriter writer = terminal.writer();
-            askQuestions(lineReader, writer);
-        }
-        return executeGeneratorLogic();
-    }
-
-    private void askQuestions(LineReader lineReader, PrintWriter writer) {
+    private void interactivePrompt(ConsoleIO consoleIO) {
         String projectName = "";
         while (projectName.trim().isEmpty()) {
-            projectName = lineReader.readLine("Enter project name: ");
+            projectName = consoleIO.askQuestion("Enter project name: ");
             if (projectName.trim().isEmpty()) {
-                writer.println("Project name cannot be empty.");
+                consoleIO.printError("Project name cannot be empty.");
             }
         }
         projectDir = new File(projectName.trim());
 
-        String desc = lineReader.readLine("Enter project description (or press Enter for default 'Description'): ");
+        String desc = consoleIO.askQuestion( "Enter project description ", "(or press Enter for default 'Description')");
         if (desc != null && !desc.trim().isEmpty()) {
             description = desc.trim();
         }
 
-        gui = askYesNoQuestion(lineReader, "Add GUI library? (y/N): ");
+        gui = consoleIO.askYesNoQuestion("Add GUI library?");
+        test = consoleIO.askYesNoQuestion("Add tests?");
 
-        test = askYesNoQuestion(lineReader, "Add tests? (y/N): ");
-
-        String authorInput = lineReader.readLine("Enter author name for MIT license (or press Enter to skip): ");
+        String authorInput = consoleIO.askQuestion("Enter author name for MIT license ", "(or press Enter to skip)");
         if (authorInput != null && !authorInput.trim().isEmpty()) {
             author = authorInput.trim();
         }
 
-        cmake = askYesNoQuestion(lineReader, "Run cmake after generation? (y/N): ");
+        cmake = consoleIO.askYesNoQuestion("Run cmake after generation?");
         if (cmake) {
-            open = askYesNoQuestion(lineReader, "Open Visual Studio solution? (y/N): ");
+            open = consoleIO.askYesNoQuestion("Open Visual Studio solution?");
         }
 
-        verbose = askYesNoQuestion(lineReader, "Show verbose output? (y/N): ");
-    }
-
-    private boolean askYesNoQuestion(LineReader reader, String prompt) {
-        String input = reader.readLine(prompt);
-        return input.trim().equalsIgnoreCase("y") || input.trim().equalsIgnoreCase("yes");
+        verbose = consoleIO.askYesNoQuestion("Show verbose output?");
     }
 
     private int executeGeneratorLogic() {
         if (projectDir.exists() || !projectDir.mkdir()) {
-            System.out.println("Failed to create project folder: " + projectDir.getAbsolutePath());
+            consoleIO.printError("Failed to create project folder: " + projectDir.getAbsolutePath());
             return 1;
         }
         if (!new File(projectDir, "data").mkdir()) {
-            System.out.println("Failed to create data folder");
+            consoleIO.printError("Failed to create data folder");
             return 1;
         }
 
-        System.out.println("Generating project in: " + projectDir.getName());
+        consoleIO.printError("Generating project in: " + projectDir.getName());
         FileSystem fileSystem = new FileSystem(projectDir, createResourceHandler());
         fileSystem.setVerbose(verbose);
 
@@ -172,10 +157,10 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
             cmakeBuilder.buildFiles();
         } catch (RuntimeException e) {
             if (!keepFiles) {
-                System.out.println("Cleaning up generated files due to error.");
+                consoleIO.printError("Cleaning up generated files due to error.");
                 fileSystem.deleteProjectDir();
             }
-            System.out.println("Error during project generation: " + e.getMessage());
+            consoleIO.printError("Error during project generation: " + e.getMessage());
             return 1;
         }
 
@@ -189,7 +174,7 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
             }
         }
 
-        System.out.println("Project generation complete.");
+        consoleIO.printError("Project generation complete.");
         return 0;
     }
 
@@ -200,10 +185,24 @@ public class GeneratorCli implements Callable<Integer>, CommandLine.IVersionProv
         return new ResourceHandler("empty-template");
     }
 
-    @Override
-    public String[] getVersion() throws IOException {
-        final Properties properties = new Properties();
-        properties.load(GeneratorCli.class.getClassLoader().getResourceAsStream("cppgen.properties"));
-        return new String[]{"", "Version info: v" + properties.getProperty("version")};
+    public void printVersion() {
+        Properties properties = new Properties();
+        try {
+            properties.load(GeneratorCli.class.getClassLoader().getResourceAsStream("cppgen.properties"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        consoleIO.printInfo("Version info: v" + properties.getProperty("version"));
     }
+
+    @Override
+    public void close() throws IOException {
+        consoleIO.close();
+    }
+
+    @Override
+    public void flush() throws IOException {
+        consoleIO.flush();
+    }
+
 }

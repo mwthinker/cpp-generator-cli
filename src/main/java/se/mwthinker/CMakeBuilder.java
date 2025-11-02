@@ -13,7 +13,8 @@ enum LicenseType {
 
 public class CMakeBuilder {
 
-    public record ExternalProject(String name, String gitUrl, String gitTag) {}
+    private record ExternalProject(String name, String gitUrl, String gitTag) {}
+    private record SourceFile(String file, String namespace) {}
 
     private boolean testProject;
     private final FileSystem fileSystem;
@@ -23,7 +24,7 @@ public class CMakeBuilder {
     private final Set<String> vcpkgDependencies = new LinkedHashSet<>(); // Want to element keep order (to make it easier for a human to read).
     private final Set<String> fetchedVcpkgDependencies = new LinkedHashSet<>();
     private final Set<String> linkLibraries = new LinkedHashSet<>();
-    private final Set<String> sources = new LinkedHashSet<>();
+    private final Set<SourceFile> sources = new LinkedHashSet<>();
     private final Set<String> extraFiles = new LinkedHashSet<>();
     private String description = "Description";
     private String author = "";
@@ -77,7 +78,12 @@ public class CMakeBuilder {
     }
 
     public CMakeBuilder addSource(String source) {
-        sources.add(source);
+        sources.add(new SourceFile(source, ""));
+        return this;
+    }
+
+    public CMakeBuilder addSourceNamespace(String source, String namespace) {
+        sources.add(new SourceFile(source, namespace));
         return this;
     }
 
@@ -102,7 +108,7 @@ public class CMakeBuilder {
         }
 
         for (var source : sources) {
-            fileSystem.copyResourceTo(source);
+            fileSystem.saveFileFromTemplate(Map.of("source", source), source.file() + ".ftl", source.file());
         }
 
         addExtraFile("CMakePresets.json");
