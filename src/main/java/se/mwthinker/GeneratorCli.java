@@ -1,16 +1,23 @@
 package se.mwthinker;
 
+import org.jline.consoleui.elements.ConfirmChoice;
+import org.jline.consoleui.prompt.ConsolePrompt;
+import org.jline.consoleui.prompt.PromptResultItemIF;
+import org.jline.consoleui.prompt.builder.PromptBuilder;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.UserInterruptException;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.*;
+import java.util.Map;
 import java.util.Properties;
 
-@SuppressWarnings("SpellCheckingInspection")
+@SuppressWarnings({"SpellCheckingInspection", "java:S106"})
 @Command(name = "cppgen",
         mixinStandardHelpOptions = true,
         description = "C++ generator using CMake"
@@ -38,7 +45,7 @@ public class GeneratorCli implements Closeable, Flushable {
     private boolean test = false;
 
     @Option(names = { "-l", "--license" }, paramLabel = "LICENSE", description = "Add MIT license with author.")
-    private String author = "";
+    private String licenseAuthor = "";
 
     @Option(names = { "-k", "--keepFiles" }, paramLabel = "KEEPFILES", description = "Keep generated files on error.")
     private boolean keepFiles = false;
@@ -46,7 +53,7 @@ public class GeneratorCli implements Closeable, Flushable {
     @Option(names = { "-v", "--version" }, versionHelp = true, description = "Display version info.")
     private boolean versionRequested = false;
 
-    private final ConsoleIO consoleIO;
+    private Terminal terminal;
 
     static void main(String[] args) {
         try (GeneratorCli generatorCli = new GeneratorCli()) {
@@ -59,15 +66,28 @@ public class GeneratorCli implements Closeable, Flushable {
     }
 
     public GeneratorCli() throws IOException {
-        consoleIO = new ConsoleIO();
+        terminal = null;
+        try {
+            terminal = TerminalBuilder.builder()
+                    .system(true)
+                    .dumb(true)
+                    .build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void run(String[] args) {
+        ConsolePrompt prompt = new ConsolePrompt(terminal);
+        PromptBuilder builder = prompt.getPromptBuilder();
+
         var commandLine = new CommandLine(this);
         try {
             commandLine.parseArgs(args);
         } catch (CommandLine.ParameterException e) {
-            consoleIO.printError("Argument error: " + e.getMessage());
+            builder.createText()
+                    .addLine("Argument error: " + e.getMessage())
+                    .addPrompt();
             System.exit(2);
         }
 
@@ -80,7 +100,7 @@ public class GeneratorCli implements Closeable, Flushable {
         }
 
         if (projectDir == null) {
-            interactivePrompt(consoleIO);
+            interactivePrompt(prompt, builder);
         }
         int exitCode = executeGeneratorLogic();
         if (exitCode == 2) {
@@ -89,55 +109,82 @@ public class GeneratorCli implements Closeable, Flushable {
         System.exit(exitCode);
     }
 
-    private void interactivePrompt(ConsoleIO consoleIO) {
-        String projectName = "";
-        while (projectName.trim().isEmpty()) {
-            projectName = consoleIO.askQuestion("Enter project name: ");
-            if (projectName.trim().isEmpty()) {
-                consoleIO.printError("Project name cannot be empty.");
-            }
+    private void interactivePrompt(ConsolePrompt prompt, PromptBuilder builder) {
+        builder.createInputPrompt()
+                .name("projectName")
+                .message("Enter project name: ")
+                .addPrompt()
+                .createInputPrompt()
+                .name("description")
+                .message("Enter project description (or press Enter for default 'Description'): ")
+                .defaultValue("Description")
+                .addPrompt()
+                .createConfirmPromp()
+                .name("gui")
+                .message("Add GUI library?")
+                .defaultValue(ConfirmChoice.ConfirmationValue.NO)
+                .addPrompt()
+                .createConfirmPromp()
+                .name("test")
+                .message("Add tests?")
+                .defaultValue(ConfirmChoice.ConfirmationValue.NO)
+                .addPrompt()
+                .createInputPrompt()
+                .name("licenseAuthor")
+                .defaultValue("")
+                .message("Enter author name for MIT license (or press Enter to skip): ")
+                .addPrompt()
+                .createConfirmPromp()
+                .name("cmake")
+                .message("Run cmake after generation?")
+                .defaultValue(ConfirmChoice.ConfirmationValue.NO)
+                .addPrompt()
+                .createConfirmPromp()
+                .name("open")
+                .message("Open Visual Studio solution?")
+                .defaultValue(ConfirmChoice.ConfirmationValue.NO)
+                .addPrompt()
+                .createConfirmPromp()
+                .name("verbose")
+                .message("Show verbose output?")
+                .defaultValue(ConfirmChoice.ConfirmationValue.NO)
+                .addPrompt();
+
+        Map<String, PromptResultItemIF> result;
+        try {
+            result = prompt.prompt(builder.build());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        projectDir = new File(projectName.trim());
 
-        String desc = consoleIO.askQuestion( "Enter project description ", "(or press Enter for default 'Description')");
-        if (desc != null && !desc.trim().isEmpty()) {
-            description = desc.trim();
-        }
-
-        gui = consoleIO.askYesNoQuestion("Add GUI library?");
-        test = consoleIO.askYesNoQuestion("Add tests?");
-
-        String authorInput = consoleIO.askQuestion("Enter author name for MIT license ", "(or press Enter to skip)");
-        if (authorInput != null && !authorInput.trim().isEmpty()) {
-            author = authorInput.trim();
-        }
-
-        cmake = consoleIO.askYesNoQuestion("Run cmake after generation?");
-        if (cmake) {
-            open = consoleIO.askYesNoQuestion("Open Visual Studio solution?");
-        }
-
-        verbose = consoleIO.askYesNoQuestion("Show verbose output?");
+        projectDir = new File(result.get("projectName").toString());
+        description = result.get("description").toString();
+        gui = result.get("gui").toString().equalsIgnoreCase("yes");
+        test = result.get("test").toString().equalsIgnoreCase("yes");
+        licenseAuthor = result.get("licenseAuthor").toString();
+        cmake = result.get("cmake").toString().equalsIgnoreCase("yes");
+        open = result.get("open").toString().equalsIgnoreCase("yes");
+        verbose = result.get("verbose").toString().equalsIgnoreCase("yes");
     }
 
     private int executeGeneratorLogic() {
         if (projectDir.exists() || !projectDir.mkdir()) {
-            consoleIO.printError("Failed to create project folder: " + projectDir.getAbsolutePath());
+            System.out.println("Failed to create project folder: " + projectDir.getAbsolutePath());
             return 1;
         }
         if (!new File(projectDir, "data").mkdir()) {
-            consoleIO.printError("Failed to create data folder");
+            System.out.println("Failed to create data folder");
             return 1;
         }
 
-        consoleIO.printError("Generating project in: " + projectDir.getName());
+        System.out.println("Generating project in: " + projectDir.getName());
         FileSystem fileSystem = new FileSystem(projectDir, createResourceHandler());
         fileSystem.setVerbose(verbose);
 
         CMakeBuilder cmakeBuilder = new CMakeBuilder(fileSystem, new Github())
                 .withDescription(description)
                 .withTestProject(test)
-                .withLicense(LicenseType.MIT, author);
+                .withLicense(LicenseType.MIT, licenseAuthor);
 
         if (gui) {
             cmakeBuilder
@@ -157,10 +204,10 @@ public class GeneratorCli implements Closeable, Flushable {
             cmakeBuilder.buildFiles();
         } catch (RuntimeException e) {
             if (!keepFiles) {
-                consoleIO.printError("Cleaning up generated files due to error.");
+                System.out.println("Cleaning up generated files due to error.");
                 fileSystem.deleteProjectDir();
             }
-            consoleIO.printError("Error during project generation: " + e.getMessage());
+            System.out.println("Error during project generation: " + e.getMessage());
             return 1;
         }
 
@@ -174,7 +221,7 @@ public class GeneratorCli implements Closeable, Flushable {
             }
         }
 
-        consoleIO.printError("Project generation complete.");
+        System.out.println("Project generation complete.");
         return 0;
     }
 
@@ -192,17 +239,17 @@ public class GeneratorCli implements Closeable, Flushable {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        consoleIO.printInfo("Version info: v" + properties.getProperty("version"));
+        System.out.println("Version info: v" + properties.getProperty("version"));
     }
 
     @Override
     public void close() throws IOException {
-        consoleIO.close();
+        terminal.close();
     }
 
     @Override
     public void flush() throws IOException {
-        consoleIO.flush();
+        terminal.flush();
     }
 
 }
