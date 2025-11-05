@@ -2,9 +2,9 @@
 A java application based on JDK 21 and maven. Implements a C++ generator CLI.
 
 ## How to use
-Generates a C++ project template based on cmake and vcpkg.
+Generates a C++ project template based on cmake and vcpkg.  
 
-Usage of the generated binary file:
+Usage of the generated binary file:  
 ```bash
 cppgen --help
 Script to generate a CMake C++ project
