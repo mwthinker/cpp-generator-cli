@@ -16,7 +16,7 @@ public class ResourceHandler {
     public ResourceHandler(String templateDir) {
         this.templateDir = templateDir;
 
-        cfg = new Configuration(Configuration.VERSION_2_3_32);
+        cfg = new Configuration(Configuration.VERSION_2_3_34);
         cfg.setDefaultEncoding("UTF-8");
         cfg.setTemplateLoader(new ClassTemplateLoader(ResourceHandler.class, "/templates/"));
     }

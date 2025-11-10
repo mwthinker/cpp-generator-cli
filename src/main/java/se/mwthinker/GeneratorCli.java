@@ -157,14 +157,14 @@ public class GeneratorCli implements Closeable, Flushable {
             throw new RuntimeException(e);
         }
 
-        projectDir = new File(result.get("projectName").toString());
-        description = result.get("description").toString();
-        gui = result.get("gui").toString().equalsIgnoreCase("yes");
-        test = result.get("test").toString().equalsIgnoreCase("yes");
-        licenseAuthor = result.get("licenseAuthor").toString();
-        cmake = result.get("cmake").toString().equalsIgnoreCase("yes");
-        open = result.get("open").toString().equalsIgnoreCase("yes");
-        verbose = result.get("verbose").toString().equalsIgnoreCase("yes");
+        projectDir = new File(result.get("projectName").getResult());
+        description = result.get("description").getResult();
+        gui = result.get("gui").getResult().equalsIgnoreCase("yes");
+        test = result.get("test").getResult().equalsIgnoreCase("yes");
+        licenseAuthor = result.get("licenseAuthor").getResult();
+        cmake = result.get("cmake").getResult().equalsIgnoreCase("yes");
+        open = result.get("open").getResult().equalsIgnoreCase("yes");
+        verbose = result.get("verbose").getResult().equalsIgnoreCase("yes");
     }
 
     private int executeGeneratorLogic() {
@@ -248,7 +248,7 @@ public class GeneratorCli implements Closeable, Flushable {
     }
 
     @Override
-    public void flush() throws IOException {
+    public void flush() {
         terminal.flush();
     }
 

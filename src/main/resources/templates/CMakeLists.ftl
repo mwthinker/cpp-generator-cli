@@ -15,7 +15,7 @@ file(COPY data/. DESTINATION ${r"${CMAKE_CURRENT_BINARY_DIR}"})
 
 set(SOURCES
 <#list sources as source>
-	${source}
+	${source.file()}
 </#list>
 <#if extraFiles?has_content>
 	

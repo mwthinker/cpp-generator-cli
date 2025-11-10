@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.IOException;
 
 abstract class CMake {
-    static private boolean VERBOSE = false;
+    private static boolean VERBOSE = false;
 
     public static void setVerbose(boolean verbose) {
         CMake.VERBOSE = verbose;

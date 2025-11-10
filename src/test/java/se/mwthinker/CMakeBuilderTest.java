@@ -7,6 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -15,7 +16,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class CMakeBuilderTest {
+class CMakeBuilderTest {
 
     private CMakeBuilder cmakeBuilder;
 
@@ -25,33 +26,32 @@ public class CMakeBuilderTest {
     private Github github;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         cmakeBuilder = new CMakeBuilder(fileSystem, github);
     }
 
     @Test
-    public void buildMustHaveAtLeastOneSourceFile() {
+    void buildMustHaveAtLeastOneSourceFile() {
         // Given
         when(fileSystem.getProjectName()).thenReturn("MyProject");
 
-        // When
-        cmakeBuilder
-                .addSource("main.cpp")
-                .buildFiles();
-
-        // Then
-        // No exception
+        // When/Then
+        assertThatCode(() ->
+            cmakeBuilder
+                    .addSource("main.cpp")
+                    .buildFiles()
+        ).doesNotThrowAnyException();
     }
 
     @Test
-    public void buildMissingSourceFile() {
+    void buildMissingSourceFile() {
         assertThatThrownBy(() -> cmakeBuilder
                 .buildFiles())
                 .isInstanceOf(RuntimeException.class);
     }
 
     @Test
-    public void buildDefaultFiles() {
+    void buildDefaultFiles() {
         // Given
         when(fileSystem.getProjectName()).thenReturn("MyProject");
 
@@ -71,14 +71,14 @@ public class CMakeBuilderTest {
         verify(fileSystem).copyResourceTo("src/main.cpp");
 
         verify(fileSystem, times(2)).copyResourceTo(any(), any());
-        verify(fileSystem, times(2)).copyResourceTo(any());
+        verify(fileSystem, times(3)).copyResourceTo(any());
         verify(fileSystem, times(2)).saveFileFromTemplate(any(), any());
         verify(fileSystem, times(1)).saveToFile(any(VcpkgObject.class), eq("vcpkg.json"));
         verify(fileSystem, times(1)).saveToFile(any(VcpkgConfigurationObject.class), eq("vcpkg-configuration.json"));
     }
 
     @Test
-    public void buildProjectWithDependency() {
+    void buildProjectWithDependency() {
         // Given
         when(fileSystem.getProjectName()).thenReturn("MyProject");
         when(github.fetchLatestCommitSHA("microsoft", "vcpkg"))
@@ -112,7 +112,7 @@ public class CMakeBuilderTest {
     }
 
     @Test
-    public void buildTestProject() {
+    void buildTestProject() {
         // Given
         when(fileSystem.getProjectName()).thenReturn("MyProject");
 
@@ -128,7 +128,7 @@ public class CMakeBuilderTest {
     }
 
     @Test
-    public void buildWithLicenseFile() {
+    void buildWithLicenseFile() {
         // Given
         when(fileSystem.getProjectName()).thenReturn("MyProject");
 

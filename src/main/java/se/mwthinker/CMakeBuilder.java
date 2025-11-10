@@ -13,8 +13,10 @@ enum LicenseType {
 
 public class CMakeBuilder {
 
-    private record ExternalProject(String name, String gitUrl, String gitTag) {}
-    private record SourceFile(String file, String namespace) {}
+    // Must be public for Freemarker template access
+    public record ExternalProject(String name, String gitUrl, String gitTag) {}
+    // Must be public for Freemarker template access
+    public record SourceFile(String file, String namespace) {}
 
     private boolean testProject;
     private final FileSystem fileSystem;
@@ -108,7 +110,7 @@ public class CMakeBuilder {
         }
 
         for (var source : sources) {
-            fileSystem.saveFileFromTemplate(Map.of("source", source), source.file() + ".ftl", source.file());
+            fileSystem.copyResourceTo(source.file());
         }
 
         addExtraFile("CMakePresets.json");
