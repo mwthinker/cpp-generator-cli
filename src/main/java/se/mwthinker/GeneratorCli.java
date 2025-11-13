@@ -1,5 +1,6 @@
 package se.mwthinker;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.jline.consoleui.elements.ConfirmChoice;
 import org.jline.consoleui.prompt.ConsolePrompt;
 import org.jline.consoleui.prompt.PromptResultItemIF;
@@ -19,7 +20,6 @@ import java.util.Properties;
 
 @SuppressWarnings({"SpellCheckingInspection", "java:S106"})
 @Command(name = "cppgen",
-        mixinStandardHelpOptions = true,
         description = "C++ generator using CMake"
 )
 public class GeneratorCli implements Closeable, Flushable {
@@ -53,6 +53,9 @@ public class GeneratorCli implements Closeable, Flushable {
     @Option(names = { "-v", "--version" }, versionHelp = true, description = "Display version info.")
     private boolean versionRequested = false;
 
+    @Option(names = { "-h", "--help" }, usageHelp = true, description = "Display this help message.")
+    private boolean help = false;
+
     private Terminal terminal;
 
     static void main(String[] args) {
@@ -85,13 +88,11 @@ public class GeneratorCli implements Closeable, Flushable {
         try {
             commandLine.parseArgs(args);
         } catch (CommandLine.ParameterException e) {
-            builder.createText()
-                    .addLine("Argument error: " + e.getMessage())
-                    .addPrompt();
+            System.err.println("Argument error: " + e.getMessage());
             System.exit(2);
         }
 
-        if (commandLine.isUsageHelpRequested()) {
+        if (help) {
             commandLine.usage(System.out);
             System.exit(0);
         } else if (versionRequested) {
@@ -138,13 +139,17 @@ public class GeneratorCli implements Closeable, Flushable {
                 .name("cmake")
                 .message("Run cmake after generation?")
                 .defaultValue(ConfirmChoice.ConfirmationValue.NO)
-                .addPrompt()
-                .createConfirmPromp()
-                .name("open")
-                .message("Open Visual Studio solution?")
-                .defaultValue(ConfirmChoice.ConfirmationValue.NO)
-                .addPrompt()
-                .createConfirmPromp()
+                .addPrompt();
+
+        if (SystemUtils.IS_OS_WINDOWS) {
+            builder.createConfirmPromp()
+                    .name("open")
+                    .message("Open Visual Studio solution?")
+                    .defaultValue(ConfirmChoice.ConfirmationValue.NO)
+                    .addPrompt();
+        }
+
+        builder.createConfirmPromp()
                 .name("verbose")
                 .message("Show verbose output?")
                 .defaultValue(ConfirmChoice.ConfirmationValue.NO)

@@ -45,8 +45,8 @@ jobs:
           cmake --version
           ls
           cd target
-          echo ./cppgen CppProject --test --cmake -v
-          ./cppgen CppProject --test --cmake -v 
+          echo ./cppgen CppProject --test --cmake -V
+          ./cppgen CppProject --test --cmake -V 
         if: runner.os != 'Windows'
 
       - name: Run binary file Windows
@@ -56,8 +56,8 @@ jobs:
           cmake --version
           ls
           cd target
-          echo ./cppgen.exe CppProject --test -v
-          ./cppgen.exe CppProject --test -v
+          echo ./cppgen.exe CppProject --test -V
+          ./cppgen.exe CppProject --test -V
         if: runner.os == 'Windows'
 
       - name: Set C++/C compiler on macOS
